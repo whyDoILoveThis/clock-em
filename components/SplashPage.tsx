@@ -5,7 +5,7 @@ const SplashPage = () => {
   return (
     <div>
       <p>please sign in to use this application</p>
-      <SignInButton />
+      <SignInButton mode="modal" />
     </div>
   );
 };

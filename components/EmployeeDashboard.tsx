@@ -1,7 +1,12 @@
+import { Owner, User } from "@/types/types.type";
 import React from "react";
 
-const EmployeeDashboard = () => {
-  return <div>EmployeeDashboard</div>;
+interface Props {
+  user: User | Owner;
+}
+
+const UserDash = ({ user }: Props) => {
+  return <div>{user.fullName}</div>;
 };
 
-export default EmployeeDashboard;
+export default UserDash;
