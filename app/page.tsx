@@ -96,9 +96,9 @@ export default function Home() {
         <p>
           Welcome
           {dbUser?.role === "owner" ? (
-            <OwnerDash user={dbUser} />
+            <OwnerDash user={dbUser as Owner} />
           ) : (
-            dbUser?.role === "user" && <UserDash user={dbUser} />
+            dbUser?.role === "user" && <UserDash user={dbUser as User} />
           )}
         </p>
       )}

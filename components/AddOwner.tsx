@@ -41,12 +41,6 @@ const AddUser = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setLogo(event.target.files[0]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     console.log("submitting");
 
@@ -133,15 +127,6 @@ const AddUser = () => {
           required
         />
         {errors.phone && <p>{errors.phone}</p>}
-      </div>
-
-      <div className="flex justify-center max-w-[320px]">
-        <input
-          type="file"
-          id="logo"
-          onChange={onFileChange}
-          placeholder="Logo"
-        />
       </div>
 
       <div className="flex flex-col border">

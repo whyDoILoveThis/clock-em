@@ -9,7 +9,6 @@ export interface Owner {
   phone: string;
   address: string;
   companies: Company[]
-  employees?: User[];
   logoUrl?: string;
 }
 
@@ -26,12 +25,13 @@ export interface User {
 }
 
 export interface Company {
-  _id: ObjectId;
+  _id: string;
   logoUrl?: string;
   name: string;
   phone: string;
   address: string;
   estDate: number;
+  employees?: User[];
 }
 
 export interface ClockInRecord {

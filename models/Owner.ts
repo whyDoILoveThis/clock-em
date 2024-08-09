@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Model, model, Types } from 'mongoose';
+import mongoose, { Document, Schema, Model, model, Types, ObjectId } from 'mongoose';
 import { IUser, UserSchema } from './User';
 
 // Define Company schema
@@ -20,9 +20,15 @@ const CompanySchema = new Schema({
     required: true,
   },
   estDate: {
-    type: Number,
+    type: String,
     required: true,
   },
+  employees: {
+    type: [UserSchema],
+    default: [],
+    required: false,
+  },
+ 
 });
 
 // Define User schema
@@ -61,11 +67,6 @@ const OwnerSchema = new Schema({
     default: [],
     required: false,
   },
-  employees: {
-    type: [UserSchema],
-    default: [],
-    required: false,
-  },
  
 });
 
@@ -79,17 +80,18 @@ interface IOwner extends Document {
   phone: string;
   address: string;
   companies: Types.DocumentArray<ICompany>
-  employees?: Types.DocumentArray<IUser>;
   logoUrl?: string;
 }
 
 // TypeScript interface for Company subdocument
 interface ICompany extends Document {
+  _id: string;
   logoUrl?: string;
   name: string;
   phone: string;
   address: string;
-  estDate: number;
+  employees?: Types.DocumentArray<IUser>;
+  estDate: string;
 }
 
 // Create and export User model

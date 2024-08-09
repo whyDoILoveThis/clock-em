@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import SplashPage from "@/components/SplashPage";
+import { ThemeProvider } from "next-themes";
+import { ThemeToggler } from "@/components/ThemeToggler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,13 +22,21 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
-          <SignedOut>
-            <SplashPage />
-          </SignedOut>
-          <SignedIn>
-            <UserButton />
-            {children}
-          </SignedIn>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SignedOut>
+              <SplashPage />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+              <ThemeToggler />
+              {children}
+            </SignedIn>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
