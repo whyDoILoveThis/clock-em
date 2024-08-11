@@ -1,6 +1,24 @@
 import mongoose, { Document, Schema, Model, model, Types, ObjectId } from 'mongoose';
 import { IUser, UserSchema } from './User';
 
+const RequestSchema = new Schema({
+  userId: {
+    type: String,
+    required: true,
+    ref: 'User',
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'accepted', 'rejected'],
+    default: 'pending',
+    required: true,
+  },
+  dateRequested: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 // Define Company schema
 const CompanySchema = new Schema({
   logoUrl: {
@@ -28,7 +46,11 @@ const CompanySchema = new Schema({
     default: [],
     required: false,
   },
- 
+  requests: {
+    type: [RequestSchema],
+    default: [],
+    required: false,
+  }
 });
 
 // Define User schema
@@ -92,7 +114,15 @@ interface ICompany extends Document {
   address: string;
   employees?: Types.DocumentArray<IUser>;
   estDate: string;
+  requests?: Types.DocumentArray<IRequest>;
 }
+
+interface IRequest extends Document {
+  userId: ObjectId;
+  status: 'pending' | 'accepted' | 'rejected';
+  dateRequested: Date;
+}
+
 
 // Create and export User model
 const Owner: Model<IOwner> = mongoose.models.Owner || model<IOwner>('Owner', OwnerSchema);

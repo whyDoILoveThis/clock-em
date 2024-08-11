@@ -9,7 +9,6 @@ import { useAuth, useUser } from "@clerk/nextjs";
 const AddUser = () => {
   const { userId } = useAuth();
   const { user } = useUser();
-  const [logo, setLogo] = useState<File | undefined>(undefined);
 
   const [formData, setFormData] = useState<UserFormData>({
     firstName: "",
@@ -41,12 +40,6 @@ const AddUser = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setLogo(event.target.files[0]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     console.log("submitting");
 
@@ -54,23 +47,11 @@ const AddUser = () => {
     console.log("defaultPrevented");
 
     try {
-      console.log("trying parse form");
-
-      userFormSchema.parse(formData);
-      setErrors({});
-      console.log("form parsed");
-
-      let imageUrl;
-      if (logo) {
-        console.log("upload attempt");
-
-        imageUrl = await fbUploadImage(logo);
-        console.log("upload complete");
-      } else {
-      }
+      let imageUrl = "";
 
       const userPayload = {
         ...formData,
+        firstName: user?.firstName ? user.firstName : user?.username,
         role: "user",
         userId,
         logoUrl: imageUrl,
@@ -91,8 +72,6 @@ const AddUser = () => {
       }
     }
   };
-
-  console.log(formData, "logoFIle >> ", logo);
 
   return (
     <form className="flex flex-col items-center w-full" onSubmit={handleSubmit}>
@@ -146,15 +125,6 @@ const AddUser = () => {
           required
         />
         {errors.phone && <p>{errors.phone}</p>}
-      </div>
-
-      <div className="flex justify-center max-w-[320px]">
-        <input
-          type="file"
-          id="logo"
-          onChange={onFileChange}
-          placeholder="Logo"
-        />
       </div>
 
       <button type="submit">Add User</button>
