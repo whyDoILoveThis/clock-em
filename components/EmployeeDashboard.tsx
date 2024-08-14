@@ -4,13 +4,14 @@ import SearchCompany from "./SearchCompany";
 
 interface Props {
   user: User | Owner;
+  refetch: () => Promise<any>;
 }
 
-const UserDash = ({ user }: Props) => {
+const UserDash = ({ user, refetch }: Props) => {
   return (
     <div>
       {user.fullName}
-      <SearchCompany />
+      <SearchCompany refetch={refetch} />
     </div>
   );
 };

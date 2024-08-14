@@ -7,6 +7,22 @@ const RequestSchema = new Schema({
     required: true,
     ref: 'User',
   },
+  userFullName: {
+    type: String,
+    required: true,
+  },
+  userEmail: {
+    type: String,
+    required: true,
+  },
+  userPhone: {
+    type: String,
+    required: true,
+  },
+  userAddress: {
+    type: String,
+    required: true,
+  },
   status: {
     type: String,
     enum: ['pending', 'accepted', 'rejected'],
@@ -18,6 +34,41 @@ const RequestSchema = new Schema({
     default: Date.now,
   },
 });
+
+const EmployeeSchema = new Schema({
+  userId: {
+    type: String,
+    required: true,
+    ref: 'User',
+  },
+  fullName: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+    required: true,
+  },
+  address: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ['employed', 'resigned', 'terminated'],
+    default: 'employed',
+    required: true,
+  },
+  dateHired: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 
 // Define Company schema
 const CompanySchema = new Schema({
@@ -42,7 +93,7 @@ const CompanySchema = new Schema({
     required: true,
   },
   employees: {
-    type: [UserSchema],
+    type: [EmployeeSchema],
     default: [],
     required: false,
   },
@@ -118,9 +169,13 @@ interface ICompany extends Document {
 }
 
 interface IRequest extends Document {
-  userId: ObjectId;
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  userPhone: string;
+  userAddress: string;
   status: 'pending' | 'accepted' | 'rejected';
-  dateRequested: Date;
+  dateRequested: string;
 }
 
 

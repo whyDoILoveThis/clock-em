@@ -4,7 +4,6 @@ import "./globals.css";
 import { ClerkProvider, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import SplashPage from "@/components/SplashPage";
 import { ThemeProvider } from "next-themes";
-import { ThemeToggler } from "@/components/ThemeToggler";
 import Navbar from "@/components/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });

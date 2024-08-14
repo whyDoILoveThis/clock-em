@@ -1,35 +1,142 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Company } from "@/types/types.type";
+import { Company, User } from "@/types/types.type";
 import UpdateCompanyForm from "./UpdateCompany";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
+import MyEmployees from "./MyEmployees";
 
 interface Props {
   index: number;
   company: Company;
   ownerId?: string;
   forOwner?: boolean;
+  refetch: () => Promise<any>;
 }
 
-const CompanyCard = ({ index, company, ownerId, forOwner = false }: Props) => {
+const CompanyCard = ({
+  index,
+  company,
+  ownerId,
+  forOwner = false,
+  refetch,
+}: Props) => {
   const [showInfoIndex, setShowInfoIndex] = useState(-9);
   const [editCompanyIndex, setEditCompanyIndex] = useState(-9);
-  const { userId } = useAuth();
+  const { isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+  const [userFullName, setUserFullName] = useState<string | null | undefined>(
+    ""
+  );
+  const [userEmail, setUserEmail] = useState<string | null | undefined>("");
+  const [userPhone, setUserPhone] = useState<string | null | undefined>("");
 
-  const handleRequestAccess = async (companyId: string) => {
+  useEffect(() => {
+    setUserFullName(user?.fullName ? user.fullName : user?.username);
+    setUserEmail(user?.emailAddresses[0].emailAddress);
+    setUserPhone(user?.phoneNumbers[0].phoneNumber);
+  }, [user]);
+  console.log(userFullName, userEmail, userPhone);
+
+  const checkUser = async (userId: string | null | undefined) => {
     try {
+      const response = await fetch("/api/checkUserExists", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Network response was not ok, status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.user) {
+        console.log(data.user);
+        refetch();
+        return data.user;
+      } else {
+      }
+    } catch (error) {
+      console.error("❌ An error occurred:", error);
+    }
+  };
+
+  const acceptRequest = async (
+    userId: string,
+    userFullName: string,
+    userEmail: string,
+    userPhone: string
+  ) => {
+    try {
+      const dbUser = await checkUser(userId);
+      const response = await fetch("/api/acceptRequest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companyId: company._id,
+          userId,
+          userFullName,
+          userEmail,
+          userPhone,
+          userAddress: dbUser?.address,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      refetch();
+      if (data.message === "Request accepted") {
+      } else {
+        console.error("Failed to accept request ❌");
+      }
+    } catch (error) {
+      console.error("Error accepting request:", error);
+    } finally {
+      refetch();
+    }
+  };
+
+  const handleRequestAccess = async (
+    companyId: string,
+    userId: string | null | undefined,
+    userFullName: string | null | undefined,
+    userEmail: string | null | undefined,
+    userPhone: string | null | undefined
+  ) => {
+    try {
+      const dbUser = await checkUser(userId);
+      console.log(userId);
+
       const response = await fetch("/api/requestAccess", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ companyId, userId }),
+        body: JSON.stringify({
+          companyId,
+          userId,
+          userFullName,
+          userEmail,
+          userPhone,
+          userAddress: dbUser?.address,
+        }),
       });
 
       const data = await response.json();
       if (response.ok) {
         alert("Request sent successfully!");
+        refetch();
       } else {
         alert(`Failed to send request: ${data.error}`);
       }
@@ -81,9 +188,51 @@ const CompanyCard = ({ index, company, ownerId, forOwner = false }: Props) => {
             <p>{company.phone}</p>
             <p>{company.address}</p>
             <p>{company.estDate}</p>
+
+            {forOwner && company.requests.length > 0 && (
+              <div>
+                <h2 className="font-bold text-center border-b mb-2">
+                  Requests
+                </h2>
+                {company.requests.map((request, index) => {
+                  return (
+                    <div key={index}>
+                      {request.status === "pending" && (
+                        <div className="flex gap-2">
+                          <p>{request.userFullName}</p>
+                          <p>{request.userPhone}</p>
+                          <button
+                            onClick={() =>
+                              acceptRequest(
+                                request.userId,
+                                request.userFullName,
+                                request.userEmail,
+                                request.userPhone
+                              )
+                            }
+                            className="btn"
+                          >
+                            {request.status}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {forOwner && <MyEmployees company={company} />}
             {!forOwner && (
               <button
-                onClick={() => handleRequestAccess(company._id)}
+                onClick={() =>
+                  handleRequestAccess(
+                    company._id,
+                    userId,
+                    userFullName,
+                    userEmail,
+                    userPhone
+                  )
+                }
                 className="btn"
               >
                 Request Access

@@ -5,13 +5,14 @@ import { useAuth } from "@clerk/nextjs";
 
 interface Props {
   user: Owner;
+  refetch: () => Promise<any>;
 }
 
-const OwnerDash = ({ user }: Props) => {
+const OwnerDash = ({ user, refetch }: Props) => {
   return (
     <div>
       {user.firstName}
-      <MyCompanies owner={user} />
+      <MyCompanies owner={user} refetch={refetch} />
     </div>
   );
 };

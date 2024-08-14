@@ -12,6 +12,18 @@ export interface Owner {
   logoUrl?: string;
 }
 
+export interface Employee{
+  userId: string,
+  fullName: string,
+  email: string,
+  phone: string,
+  address: string,
+  status: string,
+  dateHired: Date,
+
+}
+
+
 export interface User {
   userId: string;
   role: string
@@ -31,6 +43,7 @@ export interface Company {
   phone: string;
   address: string;
   estDate: number;
+  requests: Request[]
   employees?: User[];
 }
 
@@ -43,8 +56,11 @@ export interface ClockInRecord {
 }
 
 export interface Request {
-  _id: ObjectId;
-  employeeId: string;
-  companyId: string;
-  status: 'pending' | 'approved' | 'rejected';
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  userPhone: string;
+  userAddress: string
+  status: 'pending' | 'accepted' | 'rejected';
+  dateRequested: Date;
 }

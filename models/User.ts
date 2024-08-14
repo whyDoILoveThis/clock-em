@@ -19,7 +19,7 @@ const CompanySchema = new Schema({
     required: true,
   },
   estDate: {
-    type: Number,
+    type: String,
     required: true,
   },
 });
@@ -85,7 +85,7 @@ interface ICompany extends Document {
   name: string;
   phone: string;
   address: string;
-  estDate: number;
+  estDate: string;
 }
 
 // Create and export User model

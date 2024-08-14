@@ -2,13 +2,13 @@ import { Company } from "@/types/types.type";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-const DeleteCompanyForm = ({
-  ownerId,
-  theCompanies,
-}: {
+interface Props {
   ownerId: string | null | undefined;
   theCompanies: Company[];
-}) => {
+  refetch: () => Promise<any>;
+}
+
+const DeleteCompanyForm = ({ ownerId, theCompanies, refetch }: Props) => {
   const [companies, setCompanies] = useState<Company[]>(theCompanies);
   const [message, setMessage] = useState("");
 
@@ -22,9 +22,11 @@ const DeleteCompanyForm = ({
 
       const data = await response.json();
       setMessage(data.message || data.error);
+      refetch();
 
       if (data.message) {
         setCompanies(companies.filter((company) => company._id !== companyId));
+        refetch();
       }
     } catch (error) {
       console.error("❌ An error occurred:", error);

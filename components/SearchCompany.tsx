@@ -2,7 +2,11 @@ import { Company } from "@/types/types.type";
 import { useState } from "react";
 import CompanyCard from "./CompanyCard";
 
-const SearchCompany = () => {
+interface Props {
+  refetch: () => Promise<any>;
+}
+
+const SearchCompany = ({ refetch }: Props) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Company[]>([]);
 
@@ -42,7 +46,11 @@ const SearchCompany = () => {
           <ul>
             {searchResults.map((company, index) => (
               <li key={company._id}>
-                <CompanyCard index={index} company={company} />
+                <CompanyCard
+                  index={index}
+                  company={company}
+                  refetch={refetch}
+                />
               </li>
             ))}
           </ul>

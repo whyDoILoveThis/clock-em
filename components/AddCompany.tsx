@@ -4,7 +4,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const AddCompany = ({ ownerId }: { ownerId: string | null | undefined }) => {
+interface Props {
+  ownerId: string | null | undefined;
+  refetch: () => Promise<any>;
+}
+
+const AddCompany = ({ ownerId, refetch }: Props) => {
   const [formData, setFormData] = useState({
     name: "",
     logoUrl: "",
@@ -45,6 +50,7 @@ const AddCompany = ({ ownerId }: { ownerId: string | null | undefined }) => {
 
         imageUrl = await fbUploadImage(logo);
         console.log("upload complete");
+        refetch();
       } else {
       }
 
@@ -61,6 +67,7 @@ const AddCompany = ({ ownerId }: { ownerId: string | null | undefined }) => {
 
       const data = await response.json();
       setMessage(data.message || data.error);
+      refetch();
     } catch (error) {
       console.error("❌ An error occurred:", error);
     }
