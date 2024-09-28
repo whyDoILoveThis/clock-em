@@ -1,7 +1,13 @@
+// models/User.ts
 import mongoose, { Document, Schema, Model, model, Types } from 'mongoose';
+import TimecardSchema, { ITimecard } from './Timecard';
+import DaySchema, { IDay } from './Day';
 
-// Define Company schema
-const CompanySchema = new Schema({
+const EmployerSchema = new Schema({
+  userId: {
+    type: String,
+    required: true,
+  },
   logoUrl: {
     type: String,
     required: false,
@@ -22,10 +28,43 @@ const CompanySchema = new Schema({
     type: String,
     required: true,
   },
+  timecards: {
+    type: [TimecardSchema],
+    default: [],
+    required: true,
+  },
+  hourlyRate: {
+    type: Number,
+    default: 0,
+    required: false
+  }
 });
 
-// Define User schema
-export const UserSchema = new Schema({
+export interface IEmployer extends Document {
+  userId: string;
+  name: string;
+  age: number;
+  phone: string;
+  address: string;
+  logoUrl?: string;
+  weekHours: number;
+  hourlyRate?: number;
+  timecards: ITimecard[];
+}
+
+export interface IUser extends Document {
+  userId: string;
+  role: string;
+  firstName: string;
+  fullName: string;
+  age: number;
+  phone: string;
+  address: string;
+  employers?: Types.DocumentArray<IEmployer>;
+  logoUrl?: string;
+}
+
+const UserSchema = new Schema<IUser>({
   userId: {
     type: String,
     required: true,
@@ -34,6 +73,7 @@ export const UserSchema = new Schema({
   role: {
     type: String,
     required: true,
+    enum: ['user'], // Explicit roles
   },
   firstName: {
     type: String,
@@ -56,7 +96,7 @@ export const UserSchema = new Schema({
     required: true,
   },
   employers: {
-    type: [CompanySchema],
+    type: [EmployerSchema],
     default: [],
     required: false,
   },
@@ -65,28 +105,6 @@ export const UserSchema = new Schema({
     required: false,
   },
 });
-
-// TypeScript interface for User document
-export interface IUser extends Document {
-  userId: string;
-  role: string
-  firstName: string;
-  fullName: string;
-  age: string;
-  phone: string;
-  address: string;
-  employers?: Types.DocumentArray<ICompany>;
-  logoUrl?: string;
-}
-
-// TypeScript interface for Company subdocument
-interface ICompany extends Document {
-  logoUrl?: string;
-  name: string;
-  phone: string;
-  address: string;
-  estDate: string;
-}
 
 // Create and export User model
 const User: Model<IUser> = mongoose.models.User || model<IUser>('User', UserSchema);

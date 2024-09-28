@@ -5,6 +5,7 @@ import { Company, User } from "@/types/types.type";
 import UpdateCompanyForm from "./UpdateCompany";
 import { useAuth, useUser } from "@clerk/nextjs";
 import MyEmployees from "./MyEmployees";
+import { IoClose } from "react-icons/io5";
 
 interface Props {
   index: number;
@@ -146,15 +147,28 @@ const CompanyCard = ({
   };
 
   return (
-    <div className="flex items-center">
+    <div className="flex flex-col items-center">
       <div
         onClick={() => {
-          setShowInfoIndex(index);
+          showInfoIndex !== index && setShowInfoIndex(index);
         }}
-        className={`cursor-pointer border w-fit flex flex-col items-center m-4 mr-1 p-2 px-3 ${
-          showInfoIndex === index ? "rounded-2xl" : "rounded-full"
+        className={`relative border w-fit flex flex-col items-center m-4 p-2 px-3 ${
+          showInfoIndex === index
+            ? "rounded-2xl"
+            : "rounded-full cursor-pointer"
         } `}
       >
+        {showInfoIndex === index && (
+          <button
+            className="btn p-1 m-1 border-slate-700 absolute top-0 right-0"
+            onClick={() => {
+              setShowInfoIndex(-9);
+              setEditCompanyIndex(-9);
+            }}
+          >
+            <IoClose width={20} height={20} />
+          </button>
+        )}
         <div className="flex items-center ">
           {company.logoUrl && (
             <Image
@@ -221,37 +235,38 @@ const CompanyCard = ({
                 })}
               </div>
             )}
-            {forOwner && <MyEmployees company={company} />}
-            {!forOwner && (
-              <button
-                onClick={() =>
-                  handleRequestAccess(
-                    company._id,
-                    userId,
-                    userFullName,
-                    userEmail,
-                    userPhone
-                  )
-                }
-                className="btn"
-              >
-                Request Access
-              </button>
-            )}
+            <div>
+              {forOwner && <MyEmployees company={company} ownerId={ownerId} />}
+              {!forOwner && (
+                <>
+                  {company.employees?.some(
+                    (employee) => employee.userId === userId
+                  ) ? ( // Check if the user is an employee
+                    <button className="btn btn-grn" disabled>
+                      Employed
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        handleRequestAccess(
+                          company._id,
+                          userId,
+                          userFullName,
+                          userEmail,
+                          userPhone
+                        )
+                      }
+                      className="btn"
+                    >
+                      Request Access
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
-      {showInfoIndex === index && (
-        <button
-          className="btn"
-          onClick={() => {
-            setShowInfoIndex(-9);
-            setEditCompanyIndex(-9);
-          }}
-        >
-          close
-        </button>
-      )}
     </div>
   );
 };

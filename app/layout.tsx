@@ -32,8 +32,10 @@ export default function RootLayout({
               <SplashPage />
             </SignedOut>
             <SignedIn>
-              <Navbar />
-              {children}
+              <div className="w-screen h-fit flex justify-center">
+                <Navbar />
+              </div>
+              <div className="mt-16">{children}</div>
             </SignedIn>
           </ThemeProvider>
         </body>

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import AddCompany from "./AddCompany";
+import AddCompany from "./Owners/AddCompany";
 import { useAuth } from "@clerk/nextjs";
 import { Owner } from "@/types/types.type";
 import DeleteCompanyForm from "./DeletePopOver";

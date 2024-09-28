@@ -53,6 +53,7 @@ export async function POST(req: Request, res: NextApiResponse) {
 
       if (user) {
         user.employers?.push({
+          userId: companyId,
           logoUrl: company.logoUrl,
           name: company.name,
           phone: company.phone,

@@ -11,7 +11,6 @@ interface Props {
 const OwnerDash = ({ user, refetch }: Props) => {
   return (
     <div>
-      {user.firstName}
       <MyCompanies owner={user} refetch={refetch} />
     </div>
   );

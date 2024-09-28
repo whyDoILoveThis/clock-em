@@ -12,6 +12,19 @@ export interface Owner {
   logoUrl?: string;
 }
 
+export interface Employer {
+  userId: string;
+  name: string;
+  age: string;
+  phone: string;
+  address: string;
+  logoUrl?: string;
+  weeklyHours: number;
+  hourlyRate: number;
+  totalPay?: number;
+  timecards: Timecard[]; // Array of past timecards
+}
+
 export interface Employee{
   userId: string,
   fullName: string,
@@ -20,7 +33,9 @@ export interface Employee{
   address: string,
   status: string,
   dateHired: Date,
-
+  hourlyRate: number,
+  totalPay?: number;
+  timecards: Timecard[]; // Array of past timecards
 }
 
 
@@ -32,19 +47,20 @@ export interface User {
   age: string;
   phone: string;
   address: string;
-  employers?: Company;
+  employers?: Employer[];
   logoUrl?: string;
 }
 
 export interface Company {
   _id: string;
+  userId: string;
   logoUrl?: string;
   name: string;
   phone: string;
   address: string;
   estDate: number;
   requests: Request[]
-  employees?: User[];
+  employees?: Employee[];
 }
 
 export interface ClockInRecord {
@@ -54,6 +70,26 @@ export interface ClockInRecord {
   clockInTime: Date;
   clockOutTime: Date | null;
 }
+
+export interface Day {
+  date: string;
+  clockIn: Date | null;
+  clockOut: Date | null;
+  clockInStatus: boolean;
+  hoursWorked: number;
+}
+
+
+export interface Timecard {
+  userId: string;
+  companyId: string;
+  weekStart: Date;
+  weekEnd: Date;
+  days: Day[];
+  totalHours: number;
+  totalPay: number;
+}
+
 
 export interface Request {
   userId: string;

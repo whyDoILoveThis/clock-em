@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { SignOutButton, useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import AddUser from "@/components/AddUser";
 import AddOwner from "@/components/AddOwner";
 import { Owner, User } from "@/types/types.type";
 import OwnerDash from "@/components/OwnerDashboard";
 import UserDash from "@/components/EmployeeDashboard";
 import { useQuery } from "react-query";
+import "@/styles/Wave.css";
+import Loader from "./Loader";
 
 const HomePage = () => {
   const { isSignedIn } = useUser();
@@ -15,12 +17,20 @@ const HomePage = () => {
   const [userExists, setUserExists] = useState<boolean | null>(null);
   const [addingUser, setAddingUser] = useState(false);
   const [addingOwner, setAddingOwner] = useState(false);
+  const [doTheWave, setDoTheWave] = useState(true);
+  const [isWaving, setIsWaving] = useState(false);
   // Use React Query to fetch the user data
   const [queryUserId, setQueryUserId] = useState("");
   useEffect(() => {
     if (!userId) return;
     setQueryUserId(userId);
   }, [userId]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setDoTheWave(false);
+    }, 3000);
+  }, []);
 
   console.log(queryUserId);
 
@@ -36,6 +46,13 @@ const HomePage = () => {
   useEffect(() => {
     refetch();
   }, [queryUserId]);
+
+  const handleWave = () => {
+    setDoTheWave(true);
+    setTimeout(() => {
+      setIsWaving(true);
+    }, 1000);
+  };
 
   const checkUser = async (userId: string) => {
     try {
@@ -79,11 +96,15 @@ const HomePage = () => {
 
   console.log(queryUser);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading)
+    return (
+      <div className="w-full h-full flex items-center justify-center ">
+        <Loader />
+      </div>
+    );
   if (error) return <div>Error: {error.message}</div>;
   return (
     <div className="flex flex-col items-center">
-      <SignOutButton />
       {!userExists ? (
         <div>
           <h1 className="text-center text-4xl mb-4">
@@ -113,7 +134,18 @@ const HomePage = () => {
         </div>
       ) : (
         <div>
-          Welcome
+          <h1 className="mb-4 text-center text-4xl">
+            Hey {dbUser?.firstName}{" "}
+            <span
+              onClick={handleWave}
+              className={`cursor-pointer ${doTheWave && "wave"} ${
+                isWaving && "fading"
+              }`}
+            >
+              👋🏽
+            </span>
+          </h1>
+
           {dbUser?.role === "owner" ? (
             <OwnerDash user={queryUser as Owner} refetch={refetch} />
           ) : (
