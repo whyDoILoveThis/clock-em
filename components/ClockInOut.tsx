@@ -78,7 +78,17 @@ const ClockInOut = ({ userId, companyName, isClockedIn, refetch }: Props) => {
 
   return (
     <div className="clock-in-out-container flex flex-col gap-2">
-      {error && <p className="error text-red-500">{error}</p>}{" "}
+      {error && (
+        <p
+          className={`error ${
+            error === "Clocked out successfully"
+              ? "text-green-500"
+              : "text-red-500"
+          }`}
+        >
+          {error}
+        </p>
+      )}{" "}
       {/* Display errors */}
       <div className="flex gap-2">
         {!isClockedIn ? (

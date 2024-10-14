@@ -2,6 +2,7 @@ import { Company } from "@/types/types.type";
 import { useState } from "react";
 import CompanyCard from "./CompanyCard";
 import { GoSearch } from "react-icons/go";
+import Loader from "./Loader";
 
 interface Props {
   refetch: () => Promise<any>;
@@ -11,28 +12,35 @@ const SearchCompany = ({ refetch }: Props) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [isNoResults, setIsNoResults] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e: React.ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await fetch(
         `/api/searchCompany?searchTerm=${encodeURIComponent(searchTerm)}`
       );
       if (!response.ok) {
+        setLoading(false);
         throw new Error(`Error: ${response.statusText}`);
       }
       const data = await response.json();
       setSearchResults(data.companies);
       if (data.companies.length <= 0) {
         setIsNoResults(true);
+        setLoading(false);
       }
       if (data.companies.length > 0) {
         setIsNoResults(false);
+        setLoading(false);
       }
     } catch (error) {
       console.error("❌ An error occurred:", error);
+      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
@@ -69,7 +77,14 @@ const SearchCompany = ({ refetch }: Props) => {
             ))}
           </ul>
         )}
-        {isNoResults && <p className="text-center mt-2">🐳🐔💩, No Results</p>}
+        {loading && (
+          <div className="mt-4">
+            <Loader />
+          </div>
+        )}
+        {isNoResults && !loading && (
+          <p className="text-center mt-2">🐳🐔💩, No Results</p>
+        )}
       </div>
     </div>
   );

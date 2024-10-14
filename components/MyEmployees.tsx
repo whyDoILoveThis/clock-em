@@ -63,8 +63,8 @@ const MyEmployees = ({ company, ownerId }: Props) => {
         {company.employees?.map((employee, index) => (
           <div
             key={index}
-            className={`flex flex-col items-center justify-center border px-2 w-fit ${
-              showInfo ? "rounded-2xl px-3 p-2" : "rounded-full"
+            className={` flex flex-col items-center justify-center px-2 w-fit ${
+              showInfo ? "rounded-2xl px-3 p-2" : "rounded-full border"
             }`}
           >
             <div className="flex gap-1 items-center">

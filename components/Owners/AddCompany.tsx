@@ -79,6 +79,7 @@ const AddCompany = ({ ownerId, refetch }: Props) => {
       <label className="border flex flex-col p-2 rounded-2xl">
         Name:
         <input
+          className="bg-transparent"
           type="text"
           name="name"
           value={formData.name}
@@ -89,7 +90,7 @@ const AddCompany = ({ ownerId, refetch }: Props) => {
       <label className="border flex items-center p-2 rounded-2xl">
         Logo:
         <input
-          className="max-w-[110px]"
+          className="max-w-[110px] bg-transparent"
           type="file"
           id="logo"
           onChange={onFileChange}
@@ -102,6 +103,7 @@ const AddCompany = ({ ownerId, refetch }: Props) => {
       <label className="border flex flex-col p-2 rounded-2xl">
         Phone:
         <input
+          className="bg-transparent"
           type="text"
           name="phone"
           value={formData.phone}
@@ -112,6 +114,7 @@ const AddCompany = ({ ownerId, refetch }: Props) => {
       <label className="border flex flex-col p-2 rounded-2xl">
         Address:
         <input
+          className="bg-transparent"
           type="text"
           name="address"
           value={formData.address}
@@ -122,6 +125,7 @@ const AddCompany = ({ ownerId, refetch }: Props) => {
       <label className="border flex flex-col p-2 rounded-2xl">
         Established Date:
         <input
+          className="bg-transparent"
           type="date"
           name="estDate"
           value={formData.estDate}

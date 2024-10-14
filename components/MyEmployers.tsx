@@ -17,6 +17,7 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
   const [openCompanyCardIndex, setOpenCompanyCardIndex] = useState(-9);
   const [searchTimecards, setSearchTimecards] = useState(false);
   const [showTimeclock, setShowTimeclock] = useState(false);
+  const [showTimecard, setShowTimecard] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -79,8 +80,57 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                     <IoClose width={20} height={20} />
                   </button>
                 </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      setShowTimeclock(true);
+                      setShowTimecard(false);
+                    }}
+                    className={`btn mt-1 ${
+                      showTimeclock &&
+                      "dark:bg-white dark:bg-opacity-20 hover:dark:bg-opacity-20 "
+                    }`}
+                  >
+                    Timeclock
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowTimecard(true);
+                      setShowTimeclock(false);
+                    }}
+                    className={`btn mt-1 ${
+                      !showTimeclock &&
+                      showTimecard &&
+                      "dark:bg-white dark:bg-opacity-20 hover:dark:bg-opacity-20 "
+                    }`}
+                  >
+                    Time Cards
+                  </button>
+                  {showTimeclock && (
+                    <button
+                      className="btn h-fit mt-1 p-1 border-slate-700"
+                      onClick={() => {
+                        setShowTimeclock(false);
+                        setShowTimecard(false);
+                      }}
+                    >
+                      <IoClose width={20} height={20} />
+                    </button>
+                  )}
+                  {showTimecard && (
+                    <button
+                      className="btn h-fit mt-1 p-1 border-slate-700"
+                      onClick={() => {
+                        setShowTimeclock(false);
+                        setShowTimecard(false);
+                      }}
+                    >
+                      <IoClose width={20} height={20} />
+                    </button>
+                  )}
+                </div>
                 <article>
-                  {showTimeclock ? (
+                  {showTimeclock && (
                     <div>
                       <h2 className=" flex gap-2 items-center pb-1 text-xl font-bold mt-2 mb-4 border-b">
                         Timeclock{" "}
@@ -100,52 +150,40 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                         refetch={refetch}
                       />
                     </div>
-                  ) : (
-                    <>
-                      {" "}
-                      <button
-                        onClick={() => {
-                          setShowTimeclock(true);
-                        }}
-                        className="btn mt-1"
-                      >
-                        Timeclock
-                      </button>
-                      <article>
-                        <h2 className="flex gap-2 items-center pb-1 text-xl  font-bold mt-2 mb-4 border-b">
-                          {!searchTimecards ? (
-                            <p>Timecards</p>
-                          ) : (
-                            <p>Timecard Search</p>
-                          )}
-                          <button
-                            className="cursor-pointer"
-                            onClick={() => {
-                              setSearchTimecards(!searchTimecards);
-                            }}
-                          >
-                            {!searchTimecards ? (
-                              <GoSearch />
-                            ) : (
-                              <div className="btn p-1">
-                                <IoClose />
-                              </div>
-                            )}
-                          </button>
-                        </h2>
-                        {searchTimecards ? (
-                          <TimecardsSearch
-                            userId={userId}
-                            companyId={company.userId}
-                          />
+                  )}
+
+                  {showTimecard && (
+                    <article>
+                      <h2 className="flex gap-2 items-center pb-1 text-xl  font-bold mt-2 mb-4 border-b">
+                        {!searchTimecards ? (
+                          <p>Timecards</p>
                         ) : (
-                          <Timecards
-                            userId={userId}
-                            companyId={company.userId}
-                          />
+                          <p>Timecard Search</p>
                         )}
-                      </article>
-                    </>
+                        <button
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSearchTimecards(!searchTimecards);
+                          }}
+                        >
+                          {!searchTimecards ? (
+                            <GoSearch />
+                          ) : (
+                            <div className="btn p-1">
+                              <IoClose />
+                            </div>
+                          )}
+                        </button>
+                      </h2>
+                      {searchTimecards ? (
+                        <TimecardsSearch
+                          userId={userId}
+                          companyId={company.userId}
+                        />
+                      ) : (
+                        <Timecards userId={userId} companyId={company.userId} />
+                      )}
+                    </article>
                   )}
                 </article>
               </div>

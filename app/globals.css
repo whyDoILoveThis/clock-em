@@ -73,6 +73,7 @@
     
     @apply 
     border
+    border-slate-700
     w-fit
     p-0
     px-[0.4rem]
@@ -109,6 +110,15 @@
     dark:bg-opacity-40
     dark:text-green-400
     dark:border-green-500
+  }
+
+  .input {
+    @apply
+    bg-transparent
+    border
+    rounded-full
+    p-2
+    px-4
   }
 
   .search-bar {

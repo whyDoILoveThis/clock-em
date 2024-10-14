@@ -1,7 +1,12 @@
-import { formatClockInOutDate, formatWeekStartDate } from "@/lib/utils";
+import {
+  formatClockInOutDate,
+  formatClockInOutTime,
+  formatWeekStartDate,
+} from "@/lib/utils";
 import { Timecard } from "@/types/types.type";
 import React, { useEffect, useState } from "react";
 import Loader from "./Loader";
+import TimecardComponent from "./Timecard";
 interface Props {
   userId: string;
   companyId: string;
@@ -51,58 +56,9 @@ const Timecards = ({ userId, companyId }: Props) => {
           {timecards && timecards.length > 0 ? (
             <ul className="border p-2 rounded-2xl">
               {timecards.map((timecard, idx) => (
-                <li className="flex flex-col gap-2 items-center" key={idx}>
-                  <b>Week Start: {formatWeekStartDate(timecard.weekStart)}</b>
-                  <p>
-                    <b>Week Pay: </b> ${timecard.totalPay.toFixed(2)}
-                  </p>
-                  {timecard.days.map((day, index) => {
-                    const dayNames = [
-                      "Mon",
-                      "Tue",
-                      "Wed",
-                      "Thur",
-                      "Fri",
-                      "Sat",
-                      "Sun",
-                    ];
-                    // Get the whole hours
-                    const hours = Math.floor(day.hoursWorked);
-
-                    // Get the remaining minutes (decimal part * 60)
-                    const minutes = Math.round((day.hoursWorked - hours) * 60);
-
-                    return (
-                      <div className="border p-2 rounded-2xl" key={index}>
-                        {day.clockIn && (
-                          <p>
-                            <b>Clock In: </b>
-                            {formatClockInOutDate(day.clockIn)}
-                          </p>
-                        )}
-                        {day.clockOut && (
-                          <p>
-                            <b>Clock Out: </b>
-                            {formatClockInOutDate(day.clockOut)}
-                          </p>
-                        )}
-                        <p>
-                          <p>{dayNames[index]}</p>
-                          <b>Hours: </b>
-                          {hours > 0 ||
-                            (minutes > 0 ? (
-                              <p>
-                                {hours}h {minutes}m
-                              </p>
-                            ) : (
-                              0
-                            ))}
-                        </p>
-                      </div>
-                    );
-                  })}
-                  {/* Add more details from timecard if necessary */}
-                </li>
+                <div key={idx}>
+                  <TimecardComponent timecard={timecard} />
+                </div>
               ))}
             </ul>
           ) : (

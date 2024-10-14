@@ -34,59 +34,66 @@ const UpdateCompanyForm = ({ ownerId, companyId, initialData }: Props) => {
 
   return (
     <div>
-      <h2>Update Company</h2>
+      <h2 className=" font-bold text-xl">Update Company</h2>
       {message && <p>{message}</p>}
-      <form onSubmit={handleSubmit}>
+      <form className="flex flex-col" onSubmit={handleSubmit}>
         <label>
-          Name:
-          <input
-            type="text"
-            name="name"
-            value={companyData.name}
-            onChange={handleChange}
-            required
-          />
+          <b>Name:</b>
         </label>
+        <input
+          className="input"
+          type="text"
+          name="name"
+          value={companyData.name}
+          onChange={handleChange}
+          required
+        />
         <label>
-          Phone:
-          <input
-            type="text"
-            name="phone"
-            value={companyData.phone}
-            onChange={handleChange}
-            required
-          />
+          <b>Phone:</b>
         </label>
+        <input
+          className="input"
+          type="text"
+          name="phone"
+          value={companyData.phone}
+          onChange={handleChange}
+          required
+        />
         <label>
-          Address:
-          <input
-            type="text"
-            name="address"
-            value={companyData.address}
-            onChange={handleChange}
-            required
-          />
+          <b>Address:</b>
         </label>
+        <input
+          className="input"
+          type="text"
+          name="address"
+          value={companyData.address}
+          onChange={handleChange}
+          required
+        />
         <label>
-          Established Date:
-          <input
-            type="number"
-            name="estDate"
-            value={companyData.estDate}
-            onChange={handleChange}
-            required
-          />
+          <b>Established Date:</b>
         </label>
+        <input
+          className="input"
+          type="number"
+          name="estDate"
+          value={companyData.estDate}
+          onChange={handleChange}
+          required
+        />
         <label>
-          Logo URL:
-          <input
-            type="text"
-            name="logoUrl"
-            value={companyData.logoUrl}
-            onChange={handleChange}
-          />
+          <b>Logo URL:</b>
         </label>
-        <button type="submit">Update Company</button>
+        <input
+          className="input"
+          type="text"
+          name="logoUrl"
+          value={companyData.logoUrl}
+          onChange={handleChange}
+        />
+        <button className="btn mt-2" type="submit">
+          Update Company
+        </button>
       </form>
     </div>
   );

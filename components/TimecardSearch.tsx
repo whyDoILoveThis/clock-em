@@ -1,7 +1,8 @@
 import { formatClockInOutDate, formatWeekStartDate } from "@/lib/utils"; // Ensure this utility is correctly imported
 import { Timecard } from "@/types/types.type";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoSearch } from "react-icons/io5";
+import TimecardComponent from "./Timecard";
 
 interface Props {
   userId: string;
@@ -10,8 +11,14 @@ interface Props {
 
 const TimecardsSearch = ({ userId, companyId }: Props) => {
   const [timecard, setTimecard] = useState<Timecard | null>(null); // Stores fetched timecards
-  const [searchTerm, setSearchTerm] = useState<string>(""); // Track search term (date)
+  const [searchTerm, setSearchTerm] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  ); // Track search term (date)
   const [error, setError] = useState<string | null>(null); // Track errors
+
+  useEffect(() => {
+    handleSearch();
+  }, [searchTerm]);
 
   // Handle the API call to fetch timecards
   const handleSearch = async () => {
@@ -62,7 +69,9 @@ const TimecardsSearch = ({ userId, companyId }: Props) => {
         <input
           type="date"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+          }}
           className=""
           required
         />
@@ -77,64 +86,7 @@ const TimecardsSearch = ({ userId, companyId }: Props) => {
 
       {/* Display the Timecards */}
       {timecard && (
-        <ul className="border p-4 rounded-2xl">
-          <li className="flex flex-col gap-4 items-start mb-4">
-            <b>Week Start: {formatWeekStartDate(timecard.weekStart)}</b>{" "}
-            {/* Format the date */}
-            <p>
-              <b>Week Pay: </b> ${timecard.totalPay.toFixed(2)}
-            </p>
-            {timecard.days.map((day, index) => {
-              const dayNames = [
-                "Mon",
-                "Tue",
-                "Wed",
-                "Thu",
-                "Fri",
-                "Sat",
-                "Sun",
-              ];
-              const hours = Math.floor(day.hoursWorked);
-              const minutes = Math.round((day.hoursWorked - hours) * 60);
-
-              return (
-                <div
-                  className={`border p-2 rounded-2xl w-full ${
-                    searchTerm.toString().split("T")[0] ===
-                      day.date.toString().split("T")[0] && "border-yellow-200"
-                  }`}
-                  key={index}
-                >
-                  <p className="font-bold">{dayNames[index]}</p>
-
-                  {day.clockIn && (
-                    <p>
-                      <b>Clock In: </b>
-                      {formatClockInOutDate(day.clockIn)}
-                    </p>
-                  )}
-                  {day.clockOut && (
-                    <p>
-                      <b>Clock Out: </b>
-                      {formatClockInOutDate(day.clockOut)}
-                    </p>
-                  )}
-
-                  <p>
-                    <b>Hours: </b>
-                    {hours > 0 || minutes > 0 ? (
-                      <span>
-                        {hours}h {minutes}m
-                      </span>
-                    ) : (
-                      "0h"
-                    )}
-                  </p>
-                </div>
-              );
-            })}
-          </li>
-        </ul>
+        <TimecardComponent timecard={timecard} searchTerm={searchTerm} />
       )}
     </div>
   );

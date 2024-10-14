@@ -22,7 +22,7 @@ const MyCompanies = ({ owner, refetch }: Props) => {
   }, [owner.companies.length]);
 
   return (
-    <div className="relative border rounded-2xl m-1 p-6">
+    <div className="w-screen max-w-[350px] relative ">
       <div
         className={`${editCompanys && owner.companies.length > 0 && "blur-lg"}`}
       >
@@ -31,17 +31,23 @@ const MyCompanies = ({ owner, refetch }: Props) => {
             Get started by adding a company to your list 💼
           </p>
         ) : (
-          owner.companies.map((company, index) => (
-            <div key={index}>
-              <CompanyCard
-                index={index}
-                company={company}
-                ownerId={owner.userId}
-                forOwner={true}
-                refetch={refetch}
-              />
-            </div>
-          ))
+          <div className="flex flex-col items-center">
+            <h2 className="text-2xl w-fit font-bold mt-4 mb-2 border-b">
+              My Companies
+            </h2>
+
+            {owner.companies.map((company, index) => (
+              <div className="" key={index}>
+                <CompanyCard
+                  index={index}
+                  company={company}
+                  ownerId={owner.userId}
+                  forOwner={true}
+                  refetch={refetch}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
       <div className="flex flex-col items-center">
@@ -57,7 +63,7 @@ const MyCompanies = ({ owner, refetch }: Props) => {
         )}
 
         <button
-          className="btn mb-2"
+          className="btn m-6 "
           onClick={() => setIsAddingCompany(!isAddingCompany)}
         >
           {isAddingCompany ? "Done" : "+"}

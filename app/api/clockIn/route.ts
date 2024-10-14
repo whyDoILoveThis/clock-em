@@ -74,12 +74,17 @@ export async function POST(req: Request) {
       
     }
 
+    
+    
     // Find today's day in the timecard
     const todayFormatted = today.toISOString().split('T')[0];
-    const day = currentTimecard.days && currentTimecard.days.find(d => d.date === todayFormatted);
+    const day = currentTimecard.days && currentTimecard.days.find(d => d.date && new Date(d.date).toISOString().split('T')[0] === todayFormatted);
+    console.log('today: ', todayFormatted);
+    console.log('day: ', day?.date && new Date(day.date).toISOString().split('T')[0]);
+    
 
     if (day && day.clockIn !== null) {
-      return NextResponse.json({ error: 'Already clocked in today' }, { status: 400 });
+      return NextResponse.json({ error: 'Already clocked in today' }, { status: 565 });
     }
     console.log(day?.clockIn, currentTimecard);
 
@@ -104,12 +109,16 @@ const theemployer = user.employers.find(emp => emp.userId.toString() === employe
 if (theemployer) {
   // Step 2: Find the timecard based on the current week
   const timecard = theemployer.timecards.find(tc => {
-    const weekStart = tc.weekStart && new Date(tc.weekStart);
-    const weekEnd = weekStart && new Date(weekStart);
-   weekEnd && weekEnd.setDate(weekStart.getDate() + 6); // Adding 6 days to weekStart to get weekEnd
+    const weekStart = tc.weekStart && new Date(tc.weekStart).toISOString().split('T')[0];
+    const currentMonday = getMonday(new Date(today)).toISOString().split('T')[0];
+   
+    console.log('weekStart: ', weekStart);
+    console.log('currentMonday: ', currentMonday);
+    
+    
 
-    // Ensure currentDate is within the week range
-    if(weekStart && weekEnd){return currentDate >= weekStart && currentDate <= weekEnd;}
+    // Ensure weekStart is equal to the currentMonday
+    if(weekStart){return weekStart === currentMonday;}
   });
 
   if (timecard) {
@@ -127,6 +136,12 @@ if (theemployer) {
       console.log("Day found for today's date:", day);
 
       // Check if already clocked in
+      if(day.clockIn !== null){
+        console.error("User has already clocked in for today! Clock-in time:", day.clockIn);
+        return NextResponse.json({ message: `User has already clocked in for today! Clock-in time: ${day.clockIn}`}, { status: 565 });
+      }
+
+      // Ensure again there is no clock in and that the user is indeed not clocked in
       if (day.clockIn === null && day.clockInStatus === false) {
         // Update clockIn for the day
         day.clockIn = new Date();
@@ -136,7 +151,7 @@ if (theemployer) {
         await user.save();
         console.log("User clocked in successfully:", day);
       } else {
-        console.error("User has already clocked in for today! Clock-in time:", day.clockIn);
+        console.error("User has already clocked in for today! Clock-in time:", day.clockIn, "Or a problem with the clockin date");
         return NextResponse.json({ message: `User has already clocked in for today! Clock-in time: ${day.clockIn}`}, { status: 565 });
       }
     } else {

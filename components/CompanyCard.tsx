@@ -152,9 +152,11 @@ const CompanyCard = ({
         onClick={() => {
           showInfoIndex !== index && setShowInfoIndex(index);
         }}
-        className={`relative border w-fit flex flex-col items-center m-4 p-2 px-3 ${
+        className={`
+          shadow-2xl shadow-purple-950
+        relative border w-fit flex flex-col m-4 p-2 px-3 ${
           showInfoIndex === index
-            ? "rounded-2xl"
+            ? "rounded-2xl w-full"
             : "rounded-full cursor-pointer"
         } `}
       >

@@ -45,9 +45,9 @@ export function generateWeekDays(weekStart: Date): Date[] {
 }
 
 export const formatWeekStartDate = (date: Date) => {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const d = new Date(date);
-  const day = dayNames[d.getDay() + 1];
+  const day = dayNames[d.getDay()];
   const month = d.getMonth() + 1; // Months are zero-based
   const dayOfMonth = d.getDate() + 1;
   
@@ -67,6 +67,18 @@ export const formatClockInOutDate = (date: Date) => {
   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes; // Add leading zero if needed
   
   return `${day} ${month}/${dayOfMonth}/${d.getFullYear()} ${formattedHours}:${formattedMinutes}${ampm}`;
+};
+
+export const formatClockInOutTime = (date: Date) => {
+  const d = new Date(date);
+
+  const hours = d.getHours();
+  const minutes = d.getMinutes();
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  const formattedHours = hours % 12 || 12; // Adjust hours to 12-hour format
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes; // Add leading zero if needed
+  
+  return `${formattedHours}:${formattedMinutes}${ampm}`;
 };
 
 
