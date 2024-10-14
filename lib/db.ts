@@ -1,5 +1,5 @@
 import { MongoClient, MongoClientOptions, ObjectId } from 'mongodb';
-import { User, Request, Company } from '../types/types';
+import { User, Request, Company } from '@/types/types.type';
 
 // MongoDB client setup
 const uri = process.env.MONGODB_URI as string;
@@ -28,13 +28,7 @@ export const fetchEmployeeRequests = async (ownerId: string): Promise<Request[]>
   return requestsCollection.find({ ownerId: new ObjectId(ownerId) }).toArray();
 };
 
-export const approveRequest = async (requestId: string): Promise<void> => {
-  const client = await clientPromise;
-  const db = client.db('clock-em');
-  const requestsCollection = db.collection<Request>('requests');
 
-  await requestsCollection.updateOne({ _id: new ObjectId(requestId) }, { $set: { status: 'approved' } });
-};
 
 export const addEmployeeToCompany = async (employeeId: string, companyId: string): Promise<void> => {
   const client = await clientPromise;
