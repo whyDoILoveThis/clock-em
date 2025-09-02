@@ -1,7 +1,6 @@
 // models/User.ts
 import mongoose, { Document, Schema, Model, model, Types } from 'mongoose';
-import TimecardSchema, { ITimecard } from './Timecard';
-import DaySchema, { IDay } from './Day';
+import { ITimecard } from './Timecard';
 
 const EmployerSchema = new Schema({
   userId: {
@@ -28,11 +27,6 @@ const EmployerSchema = new Schema({
     type: String,
     required: true,
   },
-  timecards: {
-    type: [TimecardSchema],
-    default: [],
-    required: true,
-  },
   hourlyRate: {
     type: Number,
     default: 0,
@@ -49,7 +43,6 @@ export interface IEmployer extends Document {
   logoUrl?: string;
   weekHours: number;
   hourlyRate?: number;
-  timecards: ITimecard[];
 }
 
 export interface IUser extends Document {
@@ -62,6 +55,9 @@ export interface IUser extends Document {
   address: string;
   employers?: Types.DocumentArray<IEmployer>;
   logoUrl?: string;
+  addTimecard(companyId: string, timecard: ITimecard): Promise<void>;
+  updateTimecard(companyId: string, userId: string, updatedTimecard: ITimecard): Promise<void>;
+  deleteTimecard(companyId: string, userId: string): Promise<void>;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -105,6 +101,8 @@ const UserSchema = new Schema<IUser>({
     required: false,
   },
 });
+
+
 
 // Create and export User model
 const User: Model<IUser> = mongoose.models.User || model<IUser>('User', UserSchema);

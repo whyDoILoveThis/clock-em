@@ -1,93 +1,134 @@
 import { NextResponse } from 'next/server';
 import User from '@/models/User';
-
-// Helper to calculate hours worked between two dates
-const calculateHoursWorked = (clockIn: Date, clockOut: Date): number => {
-  const diffMs = clockOut.getTime() - clockIn.getTime(); // Difference in milliseconds
-  const diffHours = diffMs / (1000 * 60 * 60); // Convert milliseconds to hours
-  return diffHours;
-};
+import Timecard from '@/models/Timecard';
+import { DateTime } from 'luxon';
+import { nowCentral } from '@/lib/dates';
 
 // Helper to get Monday of the current week
 const getMonday = (date: Date) => {
   const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(date.setDate(diff));
+};
+
+// Calculate hours worked between two JS Date objects
+export const calculateHoursWorked = (clockIn: Date, clockOut: Date): number => {
+  const diffMs = clockOut.getTime() - clockIn.getTime();
+  return diffMs / (1000 * 60 * 60);
 };
 
 export async function POST(req: Request) {
   try {
     const { userId, employerName } = await req.json();
 
-    // Find user by userId
-    const user = await User.findOne({ userId });
+    if (!userId || !employerName) {
+      return NextResponse.json({ error: 'Missing userId or employerName' }, { status: 400 });
+    }
 
+    const user = await User.findOne({ userId });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    // Check if employers array exists and has entries
-    if (!user.employers || user.employers.length === 0) {
-      return NextResponse.json({ error: 'No employers found for this user' }, { status: 404 });
-    }
+    const employer = user.employers?.find(
+      emp => emp.name === employerName || emp.userId === employerName
+    );
+    if (!employer) return NextResponse.json({ error: 'Employer not found for this user' }, { status: 404 });
 
-    // Find employer by name
-    const employer = user.employers.find(emp => emp.name === employerName);
-
-    if (!employer) {
-      return NextResponse.json({ error: 'Employer not found' }, { status: 404 });
-    }
-
-    // Get Monday of the current week
-    const today = new Date();
+    const hourlyRate = employer.hourlyRate ?? 0;
+    const today = nowCentral().toJSDate();
     const currentMonday = getMonday(new Date(today));
 
-    // Check if there's a timecard for the current week (same Monday)
-    const currentTimecard = employer.timecards.find(tc => {
-      const weekStart = tc.weekStart && new Date(tc.weekStart).toISOString().split('T')[0];
-      return currentMonday.toISOString().split('T')[0] === weekStart;
+    // ⏪ Pull recent timecards (limit 2 weeks back for safety/perf)
+    const twoWeeksAgo = nowCentral().minus({ weeks: 52 }).toISODate();
+
+    const timecards = await Timecard.find({
+      employeeId: userId,
+      companyId: employerName,
+      weekStart: { $gte: twoWeeksAgo },
     });
 
-    if (!currentTimecard) {
-      return NextResponse.json({ error: 'No timecard found for this week' }, { status: 404 });
+    if (!timecards || timecards.length === 0) {
+      console.log('No recent timecards found');
+      return NextResponse.json({ error: 'No recent timecards found' }, { status: 404 });
     }
 
-    
-    // Find today's day in the timecard
+    // 🧹 Clean up old days that never got clocked out
+    timecards.forEach(tc => {
+      tc.days?.forEach(d => {
+        if (d.clockIn && !d.clockOut) {
+          // If date is before today, nuke it
+          const dISO = new Date(String(d.date)).toISOString().split('T')[0];
+          const todayISO = today.toISOString().split('T')[0];
+          if (dISO < todayISO) {
+            d.clockIn = null;
+            d.clockOut = null;
+            d.hoursWorked = 0;
+            d.clockInStatus = false;
+          }
+        }
+      });
+    });
+
+    await Promise.all(timecards.map(tc => tc.save()));
+
+    // ⏩ Now process *today’s* clockOut
+    const thisWeek = timecards.find(tc => 
+      new Date(String(tc.weekStart)).toISOString().split('T')[0] === currentMonday.toISOString().split('T')[0]
+    );
+    if (!thisWeek) {
+      console.log('No timecard found for this week');
+      return NextResponse.json({ error: 'Timecard not found for this week' }, { status: 404 });
+    }
+
     const todayFormatted = today.toISOString().split('T')[0];
-    const day = currentTimecard.days && currentTimecard.days.find(d => d.date && new Date(d.date).toISOString().split('T')[0] === todayFormatted);
-    
+    const day = thisWeek.days?.find(d =>
+      new Date(String(d.date)).toISOString().split('T')[0] === todayFormatted
+    );
+
     if (!day) {
-      return NextResponse.json({ error: 'No day entry found for today' }, { status: 404 });
+      return NextResponse.json({ error: 'No entry found for today' }, { status: 404 });
     }
 
-    // Check if the user has clocked in
     if (!day.clockIn) {
-      return NextResponse.json({ error: 'You need to clock in before clocking out' }, { status: 400 });
+      thisWeek.days?.forEach(d => (d.clockInStatus = false));
+      await thisWeek.save();
+      return NextResponse.json({ error: 'User has not clocked in today' }, { status: 400 });
     }
 
-    // Check if the user has already clocked out
     if (day.clockOut) {
-      return NextResponse.json({ error: 'You have already clocked out today' }, { status: 400 });
+      thisWeek.days?.forEach(d => (d.clockInStatus = false));
+      await thisWeek.save();
+      return NextResponse.json({ error: 'User has already clocked out today' }, { status: 565 });
     }
 
-    // Set the clock out time
-    day.clockOut = new Date();
+    // ✅ Normal clockOut
+    day.clockOut = today;
     day.clockInStatus = false;
-    
-    // Check if clockIn and clockOut are valid Date objects
+
     if (day.clockIn instanceof Date && day.clockOut instanceof Date) {
       day.hoursWorked = calculateHoursWorked(day.clockIn, day.clockOut);
     } else {
-      return NextResponse.json({ error: 'Invalid clockIn or clockOut time' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid time format' }, { status: 400 });
     }
 
-    const updatedPay = employer.hourlyRate && employer.hourlyRate > 0 ? day.hoursWorked * employer.hourlyRate : 0
-    currentTimecard.totalPay = updatedPay
-    console.log(currentTimecard);
-    
-    // Save the updated user document
-    await user.save();
+    // 💰 Calculate pay
+    const payForToday = day.hoursWorked * hourlyRate;
+    thisWeek.totalPay = (thisWeek.days || []).reduce(
+      (acc, d) => acc + (d.hoursWorked || 0) * hourlyRate,
+      0
+    );
 
-    return NextResponse.json({ message: 'Clocked out successfully', hoursWorked: day.hoursWorked }, { status: 200 });
+    thisWeek.days?.forEach(d => (d.clockInStatus = false));
+    await thisWeek.save();
+
+    return NextResponse.json(
+      {
+        message: 'Clocked out successfully',
+        hoursWorked: day.hoursWorked,
+        payForToday,
+        totalPay: thisWeek.totalPay,
+      },
+      { status: 200 }
+    );
 
   } catch (error) {
     console.error(error);

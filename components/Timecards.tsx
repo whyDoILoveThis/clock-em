@@ -7,62 +7,43 @@ import { Timecard } from "@/types/types.type";
 import React, { useEffect, useState } from "react";
 import Loader from "./Loader";
 import TimecardComponent from "./Timecard";
+import { useTimecards } from "@/hooks/useTimecards";
 interface Props {
   userId: string;
   companyId: string;
 }
 const Timecards = ({ userId, companyId }: Props) => {
-  const [timecards, setTimecards] = useState<Timecard[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { timecards, fetchTimecards, loading, error } = useTimecards(
+    userId,
+    companyId
+  );
 
-  useEffect(() => {
-    const fetchTimecards = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/timecards", {
-          method: "GET",
-          headers: {
-            userId: userId, // Use 'userId' key correctly
-            companyId: companyId, // Use 'companyId' key correctly
-          },
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          setTimecards(data.timecards);
-          setLoading(false);
-        } else {
-          console.error(data.error);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Failed to fetch timecards", error);
-        setLoading(false);
-      }
-      setLoading(false);
-    };
-
-    fetchTimecards();
-  }, [userId, companyId]);
-
-  console.log(timecards);
+  if (error) return <p>Error: {error} ❌</p>;
 
   return (
     <div>
       {loading ? (
-        <Loader />
+        <div className="flex justify-center items-center p-6">
+          <Loader />
+        </div>
       ) : (
         <div>
           {timecards && timecards.length > 0 ? (
-            <ul className="border p-2 rounded-2xl">
+            <ul className="space-y-4 flex flex-col items-center">
               {timecards.map((timecard, idx) => (
-                <div key={idx}>
-                  <TimecardComponent timecard={timecard} />
-                </div>
+                <li className="w-fit" key={idx}>
+                  <TimecardComponent
+                    timecard={timecard}
+                    ownerId={userId}
+                    fetchTimecards={fetchTimecards}
+                  />
+                </li>
               ))}
             </ul>
           ) : (
-            <p>No timecards available for this employer.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              No timecards available for this employer.
+            </p>
           )}
         </div>
       )}

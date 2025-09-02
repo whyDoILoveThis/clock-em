@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import User from '@/models/User';
+import Timecard from '@/models/Timecard';
+import { getMonday, initializeWeek } from '../clockIn/route';
 
 // Define the expected headers type
 interface CustomHeaders extends Headers {
@@ -36,7 +38,26 @@ export async function GET(req: Request) {
     }
 
     // Retrieve the timecards for the specified employer
-    const timecards = employer.timecards;
+    let timecards = await Timecard.find({
+      companyId,
+      employeeId: userId,
+});
+
+  // 🧼 If there are no timecards, create one for the current week
+if (timecards.length === 0) {
+  const today = new Date();
+  const currentMonday = getMonday(today);
+
+  const newTimecard = await Timecard.create({
+    companyId,
+    employeeId: userId,
+    weekStart: currentMonday.toISOString().split('T')[0],
+    totalPay: 0,
+    days: initializeWeek(currentMonday),
+  });
+
+  timecards = [newTimecard]; // Set the new one as the only entry
+}
 
     return NextResponse.json({ timecards }, { status: 200 });
 

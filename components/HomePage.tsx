@@ -9,6 +9,8 @@ import UserDash from "@/components/EmployeeDashboard";
 import { useQuery } from "react-query";
 import "@/styles/Wave.css";
 import Loader from "./Loader";
+import FloatingLightBall from "./FloatingBall";
+import MouseRope from "./MouseRope";
 
 const HomePage = () => {
   const { isSignedIn } = useUser();
@@ -133,7 +135,7 @@ const HomePage = () => {
           {addingUser ? <AddUser /> : addingOwner ? <AddOwner /> : null}
         </div>
       ) : (
-        <div>
+        <div className="w-full">
           <h1 className="mb-4 text-center text-4xl">
             Hey {dbUser?.firstName}{" "}
             <span
@@ -155,6 +157,20 @@ const HomePage = () => {
           )}
         </div>
       )}
+
+      <FloatingLightBall opacity={0.2} speed={0.1} />
+      <FloatingLightBall
+        color="bg-purple-600"
+        opacity={0.6}
+        size={100}
+        speed={0.1}
+      />
+      <FloatingLightBall
+        color="bg-pink-6d00"
+        opacity={0.2}
+        size={200}
+        speed={0.2}
+      />
     </div>
   );
 };

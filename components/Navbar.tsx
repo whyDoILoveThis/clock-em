@@ -9,7 +9,7 @@ const Navbar = () => {
       <h1 className="flex items-center gap-1 text-2xl font-extrabold ">
         <FaClock /> Clock &#39;em
       </h1>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mr-4">
         <UserButton />
         <ThemeToggler />
       </div>

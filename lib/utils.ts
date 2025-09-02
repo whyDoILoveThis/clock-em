@@ -44,14 +44,14 @@ export function generateWeekDays(weekStart: Date): Date[] {
   return days;
 }
 
-export const formatWeekStartDate = (date: Date) => {
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const d = new Date(date);
-  const day = dayNames[d.getDay()];
-  const month = d.getMonth() + 1; // Months are zero-based
-  const dayOfMonth = d.getDate() + 1;
-  
-  return `${day} ${month}/${dayOfMonth}/${d.getFullYear()}`;
+export const formatWeekStartDate = (date: Date): string => {
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+  return date.toLocaleDateString(undefined, options);
+};
+
+export const formatClockInOutTime = (date: Date): string => {
+  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', timeZone: 'CST' };
+  return date.toLocaleTimeString(undefined, options);
 };
 
 export const formatClockInOutDate = (date: Date) => {
@@ -67,18 +67,6 @@ export const formatClockInOutDate = (date: Date) => {
   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes; // Add leading zero if needed
   
   return `${day} ${month}/${dayOfMonth}/${d.getFullYear()} ${formattedHours}:${formattedMinutes}${ampm}`;
-};
-
-export const formatClockInOutTime = (date: Date) => {
-  const d = new Date(date);
-
-  const hours = d.getHours();
-  const minutes = d.getMinutes();
-  const ampm = hours >= 12 ? 'pm' : 'am';
-  const formattedHours = hours % 12 || 12; // Adjust hours to 12-hour format
-  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes; // Add leading zero if needed
-  
-  return `${formattedHours}:${formattedMinutes}${ampm}`;
 };
 
 

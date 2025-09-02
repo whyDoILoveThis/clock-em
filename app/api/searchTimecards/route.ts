@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "../../../lib/mongodb"; // Adjust the path if necessary
 import User from "@/models/User";
+import Timecard from "@/models/Timecard";
 
 export async function GET(request: Request) {
   try {
@@ -50,7 +51,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Employer not found' }, { status: 406 });
     }
 
-    const timecards = employer.timecards || [];
+   // Retrieve the timecards for the specified employer
+    let timecards = await Timecard.find({
+      companyId: employerId,
+      employeeId: userId,
+});
 
     // Search for matching timecard by weekStart or clockIn date
     const theTimecard = timecards.find(tc => {

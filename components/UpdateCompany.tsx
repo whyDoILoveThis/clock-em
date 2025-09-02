@@ -34,7 +34,9 @@ const UpdateCompanyForm = ({ ownerId, companyId, initialData }: Props) => {
 
   return (
     <div>
-      <h2 className=" font-bold text-xl">Update Company</h2>
+      <h2 className="text-indigo-600 dark:text-indigo-300 font-bold text-xl">
+        Update Company
+      </h2>
       {message && <p>{message}</p>}
       <form className="flex flex-col" onSubmit={handleSubmit}>
         <label>
@@ -91,7 +93,7 @@ const UpdateCompanyForm = ({ ownerId, companyId, initialData }: Props) => {
           value={companyData.logoUrl}
           onChange={handleChange}
         />
-        <button className="btn mt-2" type="submit">
+        <button className="btn-primary mt-2" type="submit">
           Update Company
         </button>
       </form>

@@ -1,11 +1,13 @@
 import { Company, Employer } from "@/types/types.type";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ClockInOut from "./ClockInOut";
 import Timecards from "./Timecards";
 import TimecardsSearch from "./TimecardSearch";
 import { IoClose } from "react-icons/io5";
 import { GoSearch } from "react-icons/go";
+import { useTimecards } from "@/hooks/useTimecards";
+import Loader from "./Loader";
 
 interface Props {
   companies: Employer[];
@@ -18,30 +20,55 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
   const [searchTimecards, setSearchTimecards] = useState(false);
   const [showTimeclock, setShowTimeclock] = useState(false);
   const [showTimecard, setShowTimecard] = useState(false);
+  const companyId = companies[openCompanyCardIndex]?.userId || "";
+  const { timecards, fetchTimecards, loading, error } = useTimecards(
+    userId,
+    companyId
+  );
+  const timecardsLoading = loading;
+  const [timecardsReady, setTimecardsReady] = useState(false);
+
+  useEffect(() => {
+    if (timecards.length > 0) setTimecardsReady(true);
+  }, [timecards]);
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <h2 className="text-2xl font-bold mt-4 mb-2 border-b">My Employers</h2>
+    <div className="flex flex-col items-center gap-4">
+      <h2 className="text-2xl font-semibold mt-4 mb-2 border-b pb-2 text-indigo-600 dark:text-indigo-300">
+        My Employers
+      </h2>
       {companies.map((company, index) => {
         console.log(company);
 
+        const thisCompanyIsSelected = openCompanyCardIndex === index;
+
         let isClockedIn = false;
-        company.timecards.map((timecard) => {
+        timecards.map((timecard) => {
           isClockedIn = timecard.days.some((day) => day.clockInStatus === true);
         });
+
         return (
           <div
-            onClick={() => {
-              openCompanyCardIndex !== index && setOpenCompanyCardIndex(index);
-            }}
-            className={`  shadow-2xl shadow-purple-950 my-3 border relative p-2 px-4 ${
-              openCompanyCardIndex !== index && "cursor-pointer rounded-full "
-            } ${
-              openCompanyCardIndex === index &&
-              "rounded-2xl w-screen max-w-[350px]"
-            }`}
+            onClick={() =>
+              openCompanyCardIndex !== index && setOpenCompanyCardIndex(index)
+            }
+            className={`
+          shadow-2xl shadow-purple-950
+        relative border w-fit flex flex-col m-4 p-2 px-3 ${
+          thisCompanyIsSelected
+            ? "rounded-2xl w-full max-w-[400px]"
+            : "rounded-full cursor-pointer"
+        } `}
             key={index}
           >
+            {thisCompanyIsSelected && (
+              <button
+                className="absolute top-2 right-2 btn btn-round"
+                onClick={() => setOpenCompanyCardIndex(-9)}
+              >
+                <IoClose width={20} height={20} />
+              </button>
+            )}
             <div className="flex items-center  gap-1">
               {company.logoUrl && (
                 <Image
@@ -53,32 +80,37 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
               )}
               <b>{company.name}</b>
             </div>
-            {openCompanyCardIndex === index && (
+            {thisCompanyIsSelected && (
               <div>
-                {" "}
-                <div className="flex">
+                <div className="flex items-start gap-4">
                   <div>
-                    <p>{company.address}</p>
-                    <p>{company.phone}</p>
-                    <p>${company.hourlyRate}/hr</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      {company.address}
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      {company.phone}
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      ${company.hourlyRate}/hr
+                    </p>
                     {isClockedIn ? (
-                      <p className="w-fit rounded-full px-1 leading-none text-sm btn-grn">
-                        clocked in
+                      <p className="inline-flex items-center rounded-full px-2 py-0.5 text-sm bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                        {!timecardsLoading && timecardsReady ? (
+                          "clocked in"
+                        ) : (
+                          <Loader color="green" />
+                        )}
                       </p>
                     ) : (
-                      <p className="w-fit rounded-full px-1 leading-none text-sm btn-red">
-                        clocked out
+                      <p className="inline-flex items-center rounded-full px-2 py-0.5 text-sm bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                        {!timecardsLoading && timecardsReady ? (
+                          "clocked out"
+                        ) : (
+                          <Loader color="red" />
+                        )}
                       </p>
                     )}
                   </div>
-                  <button
-                    className="btn absolute top-0 right-0 h-fit m-1 p-1 border-slate-700"
-                    onClick={() => {
-                      setOpenCompanyCardIndex(-9);
-                    }}
-                  >
-                    <IoClose width={20} height={20} />
-                  </button>
                 </div>
                 <div className="flex items-center gap-1">
                   <button
@@ -106,20 +138,10 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                   >
                     Time Cards
                   </button>
-                  {showTimeclock && (
+
+                  {(showTimecard || showTimeclock) && (
                     <button
-                      className="btn h-fit mt-1 p-1 border-slate-700"
-                      onClick={() => {
-                        setShowTimeclock(false);
-                        setShowTimecard(false);
-                      }}
-                    >
-                      <IoClose width={20} height={20} />
-                    </button>
-                  )}
-                  {showTimecard && (
-                    <button
-                      className="btn h-fit mt-1 p-1 border-slate-700"
+                      className="btn btn-round h-fit mt-1 p-1 border-slate-700"
                       onClick={() => {
                         setShowTimeclock(false);
                         setShowTimecard(false);
@@ -133,21 +155,15 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                   {showTimeclock && (
                     <div>
                       <h2 className=" flex gap-2 items-center pb-1 text-xl font-bold mt-2 mb-4 border-b">
-                        Timeclock{" "}
-                        <button
-                          onClick={() => {
-                            setShowTimeclock(false);
-                          }}
-                          className="btn p-1"
-                        >
-                          <IoClose />
-                        </button>
+                        Timeclock
                       </h2>
                       <ClockInOut
                         userId={userId}
-                        companyName={company.name}
+                        companyId={company.userId}
                         isClockedIn={isClockedIn}
-                        refetch={refetch}
+                        timecardsLoading={timecardsLoading}
+                        timecardsReady={timecardsReady}
+                        refetch={fetchTimecards}
                       />
                     </div>
                   )}

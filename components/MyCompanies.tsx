@@ -6,6 +6,8 @@ import { Owner } from "@/types/types.type";
 import DeleteCompanyForm from "./DeletePopOver";
 import CompanyCard from "./CompanyCard";
 import MyEmployees from "./MyEmployees";
+import ItsDropdown from "./ui/ItsDropdown";
+import IconThreeDots from "./icons/IconThreeDots";
 
 interface Props {
   owner: Owner;
@@ -22,52 +24,64 @@ const MyCompanies = ({ owner, refetch }: Props) => {
   }, [owner.companies.length]);
 
   return (
-    <div className="w-screen max-w-[350px] relative ">
+    <div className=" relative ">
       <div
-        className={`${editCompanys && owner.companies.length > 0 && "blur-lg"}`}
+        className={` ${
+          editCompanys && owner.companies.length > 0 && "blur-lg"
+        }`}
       >
         {owner.companies.length <= 0 ? (
           <p className="my-4">
             Get started by adding a company to your list 💼
           </p>
         ) : (
-          <div className="flex flex-col items-center">
+          <div className=" flex flex-col items-center">
             <h2 className="text-2xl w-fit font-bold mt-4 mb-2 border-b">
               My Companies
             </h2>
-
-            {owner.companies.map((company, index) => (
-              <div className="" key={index}>
-                <CompanyCard
-                  index={index}
-                  company={company}
-                  ownerId={owner.userId}
-                  forOwner={true}
-                  refetch={refetch}
-                />
-              </div>
-            ))}
+            <div className="flex flex-col items-center">
+              <ItsDropdown
+                closeWhenClicked
+                btnText={<IconThreeDots size={20} />}
+                btnClassNames="btn btn-round"
+                menuClassNames="-translate-x-20"
+              >
+                <button
+                  className="btn mb-2"
+                  onClick={() => setIsAddingCompany(!isAddingCompany)}
+                >
+                  {isAddingCompany ? "Done" : "New Company"}
+                </button>
+                {owner.companies.length > 0 && (
+                  <button
+                    className="btn text-nowrap"
+                    onClick={() => {
+                      setEditCompanys(!editCompanys);
+                    }}
+                  >
+                    {editCompanys ? "Done" : "Edit Companies"}
+                  </button>
+                )}
+              </ItsDropdown>
+            </div>
+            <ul className="flex flex-col w-full items-center gap-4">
+              {owner.companies.map((company, idx) => (
+                <li
+                  className="w-full flex justify-center max-w-[400px] m-2"
+                  key={idx}
+                >
+                  <CompanyCard
+                    index={idx}
+                    company={company}
+                    ownerId={owner.userId}
+                    forOwner={true}
+                    refetch={refetch}
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
         )}
-      </div>
-      <div className="flex flex-col items-center">
-        {owner.companies.length > 0 && (
-          <button
-            className="btn absolute top-0 right-0 m-1"
-            onClick={() => {
-              setEditCompanys(!editCompanys);
-            }}
-          >
-            {editCompanys ? "Done" : "Edit"}
-          </button>
-        )}
-
-        <button
-          className="btn m-6 "
-          onClick={() => setIsAddingCompany(!isAddingCompany)}
-        >
-          {isAddingCompany ? "Done" : "+"}
-        </button>
       </div>
 
       {isAddingCompany && <AddCompany ownerId={userId} refetch={refetch} />}

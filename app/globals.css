@@ -67,9 +67,22 @@
     @apply bg-background text-foreground;
   }
 
+
+  .btn-primary {
+    @apply
+    w-fit 
+    m-4 
+    px-3 
+    py-1  
+    bg-indigo-600 
+    hover:bg-indigo-700 
+    text-white 
+    rounded-lg
+  }
+
   
 
-  .btn {
+  .btn-glob {
     
     @apply 
     border
@@ -137,4 +150,52 @@
     bg-transparent
     outline-none
   }
+
+  .loader-spin-small {
+  width: 15px;
+  height: 15px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(farthest-side, #b7b7b7 94%, #0000) top/2px 2px
+      no-repeat,
+    conic-gradient(#0000 30%, #adadad);
+  -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 2px), #000 0);
+  animation: l13 1s infinite linear;
+  }
+  @keyframes l13 {
+    100% {
+      transform: rotate(1turn);
+    }
+  }
+
+  .loader-green {
+     background: radial-gradient(farthest-side, #97ff63 94%, #0000) top/2px 2px
+      no-repeat,
+    conic-gradient(#0000 30%, #97ff63);
+  -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 2px), #000 0);
+  }
+
+  .loader-red {
+     background: radial-gradient(farthest-side, #ea4343 94%, #0000) top/2px 2px
+      no-repeat,
+    conic-gradient(#0000 30%, #ea4343);
+  -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 2px), #000 0);
+  }
+
+  @keyframes flash-finish {
+  0% {
+    background-color: white;
+    opacity: 0.9;
+  }
+  100% {
+    background-color: inherit;
+    opacity: 1;
+  }
+}
+
+.flash-finish {
+  animation: flash-finish 0.3s ease-out;
+}
+
+
 }

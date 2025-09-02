@@ -1,13 +1,23 @@
 import { useState } from "react";
+import Loader from "./Loader";
 
 interface Props {
   userId: string;
-  companyName: string;
+  companyId: string;
   isClockedIn: boolean;
+  timecardsLoading: boolean;
+  timecardsReady: boolean;
   refetch: () => Promise<any>;
 }
 
-const ClockInOut = ({ userId, companyName, isClockedIn, refetch }: Props) => {
+const ClockInOut = ({
+  userId,
+  companyId,
+  isClockedIn,
+  timecardsLoading,
+  timecardsReady,
+  refetch,
+}: Props) => {
   const [isLoading, setIsLoading] = useState(false); // Track loading status
   const [error, setError] = useState<string | null>(null); // Track any errors
 
@@ -23,7 +33,7 @@ const ClockInOut = ({ userId, companyName, isClockedIn, refetch }: Props) => {
         },
         body: JSON.stringify({
           userId,
-          employerName: companyName,
+          companyId,
         }),
       });
 
@@ -57,7 +67,7 @@ const ClockInOut = ({ userId, companyName, isClockedIn, refetch }: Props) => {
         },
         body: JSON.stringify({
           userId,
-          employerName: companyName,
+          employerName: companyId,
         }),
       });
 
@@ -92,21 +102,37 @@ const ClockInOut = ({ userId, companyName, isClockedIn, refetch }: Props) => {
       {/* Display errors */}
       <div className="flex gap-2">
         {!isClockedIn ? (
-          <button
-            onClick={handleClockIn}
-            disabled={isLoading}
-            className="btn btn-grn"
-          >
-            {isLoading ? "Clocking In..." : "Clock In"}
-          </button>
+          <>
+            {!timecardsLoading && timecardsReady ? (
+              <button
+                onClick={handleClockIn}
+                disabled={isLoading}
+                className="btn-glob btn-grn flash-finsih"
+              >
+                {isLoading ? "Clocking In..." : "Clock In"}
+              </button>
+            ) : (
+              <button className="btn-glob btn-grn p-[0.3rem]">
+                <Loader color="green" />
+              </button>
+            )}
+          </>
         ) : (
-          <button
-            onClick={handleClockOut}
-            disabled={isLoading}
-            className="btn btn-red"
-          >
-            {isLoading ? "Clocking Out..." : "Clock Out"}
-          </button>
+          <>
+            {!timecardsLoading && timecardsReady ? (
+              <button
+                onClick={handleClockOut}
+                disabled={isLoading}
+                className="btn btn-red flash-finish"
+              >
+                {isLoading ? "Clocking Out..." : "Clock Out"}
+              </button>
+            ) : (
+              <button className="btn btn-red p-[0.3rem]">
+                <Loader color="red" />
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

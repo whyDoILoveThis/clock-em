@@ -147,51 +147,60 @@ const CompanyCard = ({
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div
-        onClick={() => {
-          showInfoIndex !== index && setShowInfoIndex(index);
-        }}
-        className={`
+    <div
+      onClick={() => {
+        showInfoIndex !== index && setShowInfoIndex(index);
+      }}
+      className={`
           shadow-2xl shadow-purple-950
-        relative border w-fit flex flex-col m-4 p-2 px-3 ${
+        relative border w-fit flex flex-col p-2 px-3 ${
           showInfoIndex === index
             ? "rounded-2xl w-full"
             : "rounded-full cursor-pointer"
         } `}
-      >
-        {showInfoIndex === index && (
-          <button
-            className="btn p-1 m-1 border-slate-700 absolute top-0 right-0"
-            onClick={() => {
-              setShowInfoIndex(-9);
-              setEditCompanyIndex(-9);
-            }}
-          >
-            <IoClose width={20} height={20} />
-          </button>
+    >
+      {showInfoIndex === index && (
+        <button
+          className="btn btn-round p-1 m-1 border-slate-700 absolute top-0 right-0"
+          onClick={() => {
+            setShowInfoIndex(-9);
+            setEditCompanyIndex(-9);
+          }}
+        >
+          <IoClose width={20} height={20} />
+        </button>
+      )}
+      <div className="flex items-center gap-1">
+        {company.logoUrl && (
+          <Image
+            width={20}
+            height={20}
+            src={company.logoUrl}
+            alt={company.name}
+          />
         )}
-        <div className="flex items-center ">
-          {company.logoUrl && (
-            <Image
-              width={20}
-              height={20}
-              src={company.logoUrl}
-              alt={company.name}
-            />
-          )}
-          {company.name}
-        </div>
-        {showInfoIndex === index && (
-          <div>
+        {company.name}
+      </div>
+      {showInfoIndex === index && (
+        <div>
+          <div
+            className={`${
+              editCompanyIndex === index &&
+              "my-2 rounded-lg p-2 bg-slate-700/10 dark:bg-slate-600/20"
+            }`}
+          >
             {forOwner && (
               <button
                 onClick={() => {
-                  setEditCompanyIndex(index);
+                  if (editCompanyIndex !== index) {
+                    setEditCompanyIndex(index);
+                  } else {
+                    setEditCompanyIndex(-999);
+                  }
                 }}
-                className="btn"
+                className={`btn ${editCompanyIndex === index && "btn-round"}`}
               >
-                edit
+                {editCompanyIndex === index ? <IoClose /> : "edit"}
               </button>
             )}
             {forOwner && editCompanyIndex === index && (
@@ -201,74 +210,78 @@ const CompanyCard = ({
                 initialData={company}
               />
             )}
-            <p>{company.phone}</p>
-            <p>{company.address}</p>
-            <p>{company.estDate}</p>
-
-            {forOwner && company.requests.length > 0 && (
-              <div>
-                <h2 className="font-bold text-center border-b mb-2">
-                  Requests
-                </h2>
-                {company.requests.map((request, index) => {
-                  return (
-                    <div key={index}>
-                      {request.status === "pending" && (
-                        <div className="flex gap-2">
-                          <p>{request.userFullName}</p>
-                          <p>{request.userPhone}</p>
-                          <button
-                            onClick={() =>
-                              acceptRequest(
-                                request.userId,
-                                request.userFullName,
-                                request.userEmail,
-                                request.userPhone
-                              )
-                            }
-                            className="btn"
-                          >
-                            {request.status}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div>
-              {forOwner && <MyEmployees company={company} ownerId={ownerId} />}
-              {!forOwner && (
-                <>
-                  {company.employees?.some(
-                    (employee) => employee.userId === userId
-                  ) ? ( // Check if the user is an employee
-                    <button className="btn btn-grn" disabled>
-                      Employed
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        handleRequestAccess(
-                          company._id,
-                          userId,
-                          userFullName,
-                          userEmail,
-                          userPhone
-                        )
-                      }
-                      className="btn"
-                    >
-                      Request Access
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
           </div>
-        )}
-      </div>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            {company.phone}
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            {company.address}
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            {company.estDate}
+          </p>
+
+          {forOwner && company.requests.length > 0 && (
+            <div>
+              <h2 className="font-bold text-center border-b mb-2">Requests</h2>
+              {company.requests.map((request, index) => {
+                return (
+                  <div key={index}>
+                    {request.status === "pending" && (
+                      <div className="flex gap-2">
+                        <p>{request.userFullName}</p>
+                        <p>{request.userPhone}</p>
+                        <button
+                          onClick={() =>
+                            acceptRequest(
+                              request.userId,
+                              request.userFullName,
+                              request.userEmail,
+                              request.userPhone
+                            )
+                          }
+                          className="btn"
+                        >
+                          {request.status}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div>
+            {forOwner && <MyEmployees company={company} ownerId={ownerId} />}
+            {!forOwner && (
+              <>
+                {company.employees?.some(
+                  (employee) => employee.userId === userId
+                ) ? ( // Check if the user is an employee
+                  <button className="btn btn-grn" disabled>
+                    Employed
+                  </button>
+                ) : (
+                  <button
+                    onClick={() =>
+                      handleRequestAccess(
+                        company._id,
+                        userId,
+                        userFullName,
+                        userEmail,
+                        userPhone
+                      )
+                    }
+                    className="btn"
+                  >
+                    Request Access
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

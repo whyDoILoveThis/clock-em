@@ -83,6 +83,7 @@ export interface Day {
 export interface Timecard {
   userId: string;
   companyId: string;
+  employeeId: string;
   weekStart: Date;
   weekEnd: Date;
   days: Day[];

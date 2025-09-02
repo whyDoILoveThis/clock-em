@@ -1,19 +1,17 @@
 import React from "react";
-import { InfinitySpin, RotatingLines } from "react-loader-spinner";
 
-const Loader = () => {
+interface Props {
+  color?: string;
+}
+
+const LoaderSpinSmall = ({ color }: Props) => {
   return (
-    <div className="flex items-center justify-center">
-      <RotatingLines
-        width="20"
-        visible={true}
-        strokeWidth="5"
-        strokeColor="grey"
-        animationDuration="5"
-        ariaLabel="rotating-lines-loading"
-      />
-    </div>
+    <div
+      className={`loader-spin-small ${
+        color && (color === "red" || color === "Red") && "loader-red"
+      } ${color && (color === "green" || color === "Green") && "loader-green"}`}
+    />
   );
 };
 
-export default Loader;
+export default LoaderSpinSmall;

@@ -93,6 +93,19 @@ const AddUser = () => {
       <div className="border">
         <input
           type="text"
+          name="firstName"
+          id="firstName"
+          placeholder="First Name..."
+          value={formData.firstName}
+          onChange={handleChange}
+          required
+        />
+        {errors.firstName && <p className="text-red-400">{errors.firstName}</p>}
+      </div>
+
+      <div className="border">
+        <input
+          type="text"
           name="fullName"
           id="fullName"
           placeholder="Full Name..."
@@ -100,7 +113,7 @@ const AddUser = () => {
           onChange={handleChange}
           required
         />
-        {errors.fullName && <p>{errors.fullName}</p>}
+        {errors.fullName && <p className="text-red-400">{errors.fullName}</p>}
       </div>
 
       <div className="border">
@@ -113,7 +126,7 @@ const AddUser = () => {
           onChange={handleChange}
           required
         />
-        {errors.age && <p>{errors.age}</p>}
+        {errors.age && <p className="text-red-400">{errors.age}</p>}
       </div>
 
       <div className="flex flex-col border">
@@ -126,7 +139,7 @@ const AddUser = () => {
           onChange={handleChange}
           required
         />
-        {errors.phone && <p>{errors.phone}</p>}
+        {errors.phone && <p className="text-red-400">{errors.phone}</p>}
       </div>
 
       <div className="flex flex-col border">
@@ -139,7 +152,7 @@ const AddUser = () => {
           onChange={handleChange}
           required
         />
-        {errors.phone && <p>{errors.phone}</p>}
+        {errors.phone && <p className="text-red-400">{errors.phone}</p>}
       </div>
 
       <button type="submit">Add User</button>

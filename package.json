@@ -17,7 +17,9 @@
     "clsx": "^2.1.1",
     "firebase": "^10.12.5",
     "formidable": "^3.5.1",
+    "framer-motion": "^12.23.12",
     "lucide-react": "^0.416.0",
+    "luxon": "^3.6.1",
     "mongodb": "^6.8.0",
     "mongoose": "^8.5.1",
     "multer": "^1.4.5-lts.1",
@@ -37,6 +39,7 @@
   },
   "devDependencies": {
     "@types/formidable": "^3.4.5",
+    "@types/luxon": "^3.6.2",
     "@types/multer": "^1.4.11",
     "@types/node": "^20",
     "@types/react": "^18",

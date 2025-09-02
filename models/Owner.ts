@@ -1,6 +1,5 @@
 // models/Owner.ts
 import mongoose, { Document, Schema, Model, model, Types } from 'mongoose';
-import TimecardSchema, { ITimecard } from './Timecard';
 
 const RequestSchema = new Schema({
   userId: {
@@ -77,12 +76,7 @@ const EmployeeSchema = new Schema({
     type: Number,
     required: false,
     default: 0,
-  },
-  timecards: {
-    type: [TimecardSchema],
-    default: [],
-    required: false,
-  },
+  }
 });
 
 const CompanySchema = new Schema({
@@ -138,7 +132,6 @@ export interface IEmployee extends Document {
   dateHired: Date;
   hourlyRate?: number;
   totalPay?: number;
-  timecards: Types.DocumentArray<ITimecard>;
 }
 
 export interface ICompany extends Document {
