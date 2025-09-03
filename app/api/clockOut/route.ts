@@ -3,6 +3,7 @@ import User from '@/models/User';
 import Timecard from '@/models/Timecard';
 import { DateTime } from 'luxon';
 import { nowCentral } from '@/lib/dates';
+import { calculateHoursWorked, getMonday } from '@/lib/global';
 
 
 
@@ -126,15 +127,5 @@ export async function POST(req: Request) {
 }
 
 
-// Helper to get Monday of the current week
-const getMonday = (date: Date) => {
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(date.setDate(diff));
-};
 
-// Calculate hours worked between two JS Date objects
-export const calculateHoursWorked = (clockIn: Date, clockOut: Date): number => {
-  const diffMs = clockOut.getTime() - clockIn.getTime();
-  return diffMs / (1000 * 60 * 60);
-};
+
