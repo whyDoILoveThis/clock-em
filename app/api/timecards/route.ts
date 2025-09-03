@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import User from '@/models/User';
 import Timecard from '@/models/Timecard';
-import { getMonday, initializeWeek } from '../clockIn/route';
+import { getMonday, initializeWeek } from '@/lib/global';
 
 // Define the expected headers type
 interface CustomHeaders extends Headers {
