@@ -6,36 +6,11 @@ import { Day } from '@/types/types.type';
 import { NextResponse } from 'next/server';
 import { DateTime } from 'luxon';
 import { nowCentral } from '@/lib/dates';
+import { getMonday, initializeWeek } from '@/lib/global';
 
 
 
 
-// Helper to get Monday of the current week
-export const getMonday = (date: Date): Date => {
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
-  return new Date(date.setDate(diff));
-};
-
-// Helper to initialize the week with empty days
-export const initializeWeek = (monday: Date): Day[] => {
-  const days: Day[] = [];
-
-  for (let i = 0; i < 7; i++) {
-    const currentDay = new Date(monday);
-    currentDay.setDate(monday.getDate() + i);
-
-    days.push({
-      date: currentDay.toISOString().split('T')[0], // YYYY-MM-DD
-      clockIn: null,
-      clockOut: null,
-      clockInStatus: false,
-      hoursWorked: 0, // You can add other fields as per your schema here
-    });
-  }
-  
-  return days;
-};
 
 export async function POST(req: Request) {
   try {
@@ -107,3 +82,7 @@ day.clockIn = nowCentral().toJSDate();
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+
+
+
