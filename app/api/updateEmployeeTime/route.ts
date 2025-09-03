@@ -6,43 +6,7 @@ import User from "@/models/User";
 import Timecard from "@/models/Timecard";
 import { DateTime } from "luxon";
 
-const toISODateSafe = (input?: string | Date | null): string | null => {
-  if (!input) return null;
-  if (input instanceof Date) return DateTime.fromJSDate(input, { zone: "utc" }).toISO();
-  let dt = DateTime.fromISO(String(input), { zone: "utc" });
-  if (!dt.isValid) dt = DateTime.fromJSDate(new Date(String(input)), { zone: "utc" });
-  return dt.isValid ? dt.toISO() : null;
-};
 
-const toJSDateSafe = (input?: string | Date | null): Date | null => {
-  if (!input) return null;
-  if (input instanceof Date) return input;
-  const dt = DateTime.fromISO(String(input), { zone: "utc" });
-  if (dt.isValid) return dt.toJSDate();
-  const dt2 = DateTime.fromJSDate(new Date(String(input)), { zone: "utc" });
-  return dt2.isValid ? dt2.toJSDate() : null;
-};
-
-const getWeekStartMondayDate = (dateIsoOrDate: string | Date): Date | null => {
-  const dt = dateIsoOrDate instanceof Date
-    ? DateTime.fromJSDate(dateIsoOrDate, { zone: "utc" })
-    : DateTime.fromISO(String(dateIsoOrDate), { zone: "utc" });
-  if (!dt.isValid) return null;
-  const daysToSubtract = dt.weekday === 7 ? 6 : dt.weekday - 1;
-  const monday = dt.minus({ days: daysToSubtract }).startOf("day");
-  return monday.toJSDate();
-};
-
-// Calculate hours between two Date objects (UTC-aware) and round to 2 decimals
-const calculateHoursWorked = (clockIn: Date, clockOut: Date): number => {
-  const s = DateTime.fromJSDate(clockIn, { zone: "utc" });
-  const e = DateTime.fromJSDate(clockOut, { zone: "utc" });
-  if (!s.isValid || !e.isValid) return 0;
-  const minutes = e.diff(s, "minutes").minutes;
-  if (minutes <= 0) return 0;
-  const hours = minutes / 60;
-  return Math.round(hours * 100) / 100;
-};
 
 export async function PUT(request: Request) {
   try {
@@ -224,3 +188,42 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Internal Server Error ❌" }, { status: 500 });
   }
 }
+
+
+const toISODateSafe = (input?: string | Date | null): string | null => {
+  if (!input) return null;
+  if (input instanceof Date) return DateTime.fromJSDate(input, { zone: "utc" }).toISO();
+  let dt = DateTime.fromISO(String(input), { zone: "utc" });
+  if (!dt.isValid) dt = DateTime.fromJSDate(new Date(String(input)), { zone: "utc" });
+  return dt.isValid ? dt.toISO() : null;
+};
+
+const toJSDateSafe = (input?: string | Date | null): Date | null => {
+  if (!input) return null;
+  if (input instanceof Date) return input;
+  const dt = DateTime.fromISO(String(input), { zone: "utc" });
+  if (dt.isValid) return dt.toJSDate();
+  const dt2 = DateTime.fromJSDate(new Date(String(input)), { zone: "utc" });
+  return dt2.isValid ? dt2.toJSDate() : null;
+};
+
+const getWeekStartMondayDate = (dateIsoOrDate: string | Date): Date | null => {
+  const dt = dateIsoOrDate instanceof Date
+    ? DateTime.fromJSDate(dateIsoOrDate, { zone: "utc" })
+    : DateTime.fromISO(String(dateIsoOrDate), { zone: "utc" });
+  if (!dt.isValid) return null;
+  const daysToSubtract = dt.weekday === 7 ? 6 : dt.weekday - 1;
+  const monday = dt.minus({ days: daysToSubtract }).startOf("day");
+  return monday.toJSDate();
+};
+
+// Calculate hours between two Date objects (UTC-aware) and round to 2 decimals
+const calculateHoursWorked = (clockIn: Date, clockOut: Date): number => {
+  const s = DateTime.fromJSDate(clockIn, { zone: "utc" });
+  const e = DateTime.fromJSDate(clockOut, { zone: "utc" });
+  if (!s.isValid || !e.isValid) return 0;
+  const minutes = e.diff(s, "minutes").minutes;
+  if (minutes <= 0) return 0;
+  const hours = minutes / 60;
+  return Math.round(hours * 100) / 100;
+};
