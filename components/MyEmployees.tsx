@@ -8,6 +8,7 @@ import { FiEdit2 } from "react-icons/fi";
 import { IoClose, IoSearch } from "react-icons/io5";
 import TimecardsSearch from "./TimecardSearch";
 import { motion, AnimatePresence } from "framer-motion";
+import { DollarSign } from "lucide-react";
 
 interface Props {
   company: Company;
@@ -15,7 +16,7 @@ interface Props {
 }
 
 const MyEmployees = ({ company, ownerId }: Props) => {
-  const [showInfo, setShowInfo] = useState(false);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [editingRate, setEditingRate] = useState(false); // Track which employee's rate is being edited
   const [editingTimecard, setEditingTimecard] = useState(false);
   const [newRate, setNewRate] = useState(0.0); // Store the new hourly rate
@@ -61,7 +62,7 @@ const MyEmployees = ({ company, ownerId }: Props) => {
 
   const updateEmployeeTimeAPI = async (
     employeeId: string,
-    clear: boolean = false
+    clear: boolean = false,
   ) => {
     try {
       setLoading(true);
@@ -119,7 +120,7 @@ const MyEmployees = ({ company, ownerId }: Props) => {
 
   const handleUpdateEmployeeTime = (
     employeeId: string,
-    clear: boolean = false
+    clear: boolean = false,
   ) => {
     if (!selectedDate) {
       alert("Please select a date.");
@@ -139,205 +140,216 @@ const MyEmployees = ({ company, ownerId }: Props) => {
       <h2 className="text-xl font-semibold mb-3 mt-4 border-b pb-2">
         Employees ({company.employees?.length})
       </h2>
-      <div>
+      <div className="flex flex-col gap-3">
         {/** Map the Employees */}
-        {company.employees?.map((employee, index) => (
-          <button
-            key={index}
-            type="button"
-            className={`${
-              showInfo ? "!cursor-default w-full" : "w-fit"
-            } flex items-center flex-col p-3 rounded-lg overflow-hidden bg-slate-900/10 dark:bg-slate-700/20 backdrop-blur-sm shadow-sm border border-gray-100/30 dark:border-slate-700/20`}
-            onClick={() => {
-              if (!showInfo) setShowInfo(true);
-            }}
-          >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
+        {company.employees?.map((employee, index) => {
+          const isOpen = openIndex === index;
+          return (
+            <div
+              key={index}
+              className={`${
+                isOpen ? "cursor-default" : "cursor-pointer"
+              } w-full flex items-center flex-col p-3 rounded-lg overflow-hidden bg-slate-900/10 dark:bg-slate-700/20 backdrop-blur-sm shadow-sm border border-gray-100/30 dark:border-slate-700/20`}
+              onClick={() => {
+                if (!isOpen) {
+                  setOpenIndex(index);
+                  setEditingRate(false);
+                  setEditingTimecard(false);
+                  setSearchTimecards(false);
+                }
+              }}
+            >
+              <div className="flex items-center justify-between w-full">
                 <p className="text-lg font-medium ">{employee.fullName}</p>
-                <button className="text-slate-500 dark:text-slate-300">
-                  {showInfo ? (
-                    <button
-                      onClick={() => {
-                        setShowInfo(false);
-                      }}
-                      className="btn btn-round absolute right-0 top-0 m-1"
-                    >
-                      <IoClose />
-                    </button>
-                  ) : (
+                {isOpen ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenIndex(null);
+                    }}
+                    className="btn btn-round text-slate-500 dark:text-slate-300 cursor-pointer"
+                  >
+                    <IoClose />
+                  </button>
+                ) : (
+                  <span className="text-slate-500 dark:text-slate-300">
                     <MdInfoOutline width="20px" />
-                  )}
-                </button>
+                  </span>
+                )}
               </div>
-            </div>
-            <AnimatePresence>
-              {showInfo && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="flex flex-col mb-4 items-center">
-                    <div
-                      className={`flex place-self-start gap-2 items-center mb-4 ${
-                        editingRate &&
-                        "rounded-lg p-2 bg-slate-700/10 dark:bg-slate-600/20"
-                      }`}
-                    >
-                      <span className="flex items-center gap-1">
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          ${newRate > 0 ? newRate : employee.hourlyRate}/hr
-                        </p>
-                        <button
-                          onClick={() => setEditingRate(!editingRate)}
-                          className="btn btn-round p-1 "
-                        >
-                          {!editingRate ? (
-                            <FiEdit2 />
-                          ) : (
-                            <IoClose width={18} height={18} />
-                          )}
-                        </button>
-                      </span>
-                      {editingRate && (
-                        <article className="flex flex-col gap-2">
-                          <label htmlFor="hourlyRate">Hourly Rate:</label>
-                          <input
-                            type="number"
-                            id="hourlyRate"
-                            value={newRate}
-                            onChange={(e) =>
-                              setNewRate(parseFloat(e.target.value))
-                            }
-                            step="0.01"
-                            min="0"
-                            className="w-full px-2 py-1 border !border-slate-500 !border-opacity-40 rounded bg-white/80 dark:!bg-slate-950/60"
-                            placeholder="Enter hourly rate"
-                          />
-                          <button
-                            className="inline-flex items-center w-fit px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
-                            onClick={() =>
-                              handleUpdateHourlyRate(employee.userId)
-                            }
-                          >
-                            Update Hourly Rate
-                          </button>
-                        </article>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
-                      {employee.phone}
-                    </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
-                      {employee.address}
-                    </p>
-                    <button
-                      onClick={() => setEditingTimecard(!editingTimecard)}
-                      className="place-self-start btn-primary"
-                    >
-                      {!editingTimecard
-                        ? "Edit A Timecard"
-                        : "Cancel Timecard Edit"}
-                    </button>
-                    {editingTimecard && (
-                      <div className="flex flex-col gap-2 mb-4">
-                        <label
-                          htmlFor="selectedDate"
-                          className="text-sm text-slate-700 dark:text-slate-300"
-                        >
-                          Date:
-                        </label>
-                        <input
-                          type="date"
-                          id="selectedDate"
-                          value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
-                          className="w-full px-2 py-1 border rounded bg-white/80 dark:bg-slate-800/60"
-                        />
-                        <label
-                          htmlFor="clockIn"
-                          className="text-sm text-slate-700 dark:text-slate-300"
-                        >
-                          Clock In:
-                        </label>
-                        <input
-                          type="time"
-                          id="clockIn"
-                          value={clockIn}
-                          onChange={(e) => setClockIn(e.target.value)}
-                          className="w-full px-2 py-1 border rounded bg-white/80 dark:bg-slate-800/60"
-                        />
-                        <label
-                          htmlFor="clockOut"
-                          className="text-sm text-slate-700 dark:text-slate-300"
-                        >
-                          Clock Out:
-                        </label>
-                        <input
-                          type="time"
-                          id="clockOut"
-                          value={clockOut}
-                          onChange={(e) => setClockOut(e.target.value)}
-                          className="w-full px-2 py-1 border rounded bg-white/80 dark:bg-slate-800/60"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
-                            onClick={() =>
-                              handleUpdateEmployeeTime(employee.userId)
-                            }
-                          >
-                            Update Time
-                          </button>
-                          <button
-                            className="inline-flex items-center px-3 py-1 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded"
-                            onClick={() =>
-                              handleUpdateEmployeeTime(employee.userId, true)
-                            }
-                          >
-                            Clear Time
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-1 items-center">
-                      <button
-                        onClick={() => {
-                          setSearchTimecards(!searchTimecards);
-                        }}
-                        className="flex gap-1 items-center"
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="flex flex-col mb-4 items-center">
+                      <div
+                        className={`flex place-self-start gap-2 items-center mb-4 ${
+                          editingRate &&
+                          "rounded-lg p-2 bg-slate-700/10 dark:bg-slate-600/20"
+                        }`}
                       >
-                        <b>
-                          {searchTimecards ? "Timecard Search" : "Timecards"}
-                        </b>
-                        <div className="btn btn-round p-1">
-                          {!searchTimecards ? <IoSearch /> : <IoClose />}
-                        </div>
+                        <span className="flex items-center gap-1">
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <DollarSign
+                              size={13}
+                              className="inline-block text-slate-400 -mt-0.5"
+                            />
+                            {newRate > 0 ? newRate : employee.hourlyRate}/hr
+                          </p>
+                          <button
+                            onClick={() => setEditingRate(!editingRate)}
+                            className="btn btn-round p-1 "
+                          >
+                            {!editingRate ? (
+                              <FiEdit2 />
+                            ) : (
+                              <IoClose width={18} height={18} />
+                            )}
+                          </button>
+                        </span>
+                        {editingRate && (
+                          <article className="flex flex-col gap-2">
+                            <label htmlFor="hourlyRate">Hourly Rate:</label>
+                            <input
+                              type="number"
+                              id="hourlyRate"
+                              value={newRate}
+                              onChange={(e) =>
+                                setNewRate(parseFloat(e.target.value))
+                              }
+                              step="0.01"
+                              min="0"
+                              className="w-full px-2 py-1 border !border-slate-500 !border-opacity-40 rounded bg-white/80 dark:!bg-slate-950/60"
+                              placeholder="Enter hourly rate"
+                            />
+                            <button
+                              className="inline-flex items-center w-fit px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+                              onClick={() =>
+                                handleUpdateHourlyRate(employee.userId)
+                              }
+                            >
+                              Update Hourly Rate
+                            </button>
+                          </article>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-700 dark:text-slate-300">
+                        {employee.phone}
+                      </p>
+                      <p className="text-sm text-slate-700 dark:text-slate-300">
+                        {employee.address}
+                      </p>
+                      <button
+                        onClick={() => setEditingTimecard(!editingTimecard)}
+                        className="place-self-start btn-primary"
+                      >
+                        {!editingTimecard
+                          ? "Edit A Timecard"
+                          : "Cancel Timecard Edit"}
                       </button>
-
-                      {searchTimecards ? (
-                        <TimecardsSearch
-                          userId={employee.userId}
-                          companyId={company._id}
-                        />
-                      ) : (
-                        <Timecards
-                          userId={employee.userId}
-                          companyId={company._id}
-                          key={refreshTimecards}
-                        />
+                      {editingTimecard && (
+                        <div className="flex flex-col gap-2 mb-4">
+                          <label
+                            htmlFor="selectedDate"
+                            className="text-sm text-slate-700 dark:text-slate-300"
+                          >
+                            Date:
+                          </label>
+                          <input
+                            type="date"
+                            id="selectedDate"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="w-full px-2 py-1 border rounded bg-white/80 dark:bg-slate-800/60"
+                          />
+                          <label
+                            htmlFor="clockIn"
+                            className="text-sm text-slate-700 dark:text-slate-300"
+                          >
+                            Clock In:
+                          </label>
+                          <input
+                            type="time"
+                            id="clockIn"
+                            value={clockIn}
+                            onChange={(e) => setClockIn(e.target.value)}
+                            className="w-full px-2 py-1 border rounded bg-white/80 dark:bg-slate-800/60"
+                          />
+                          <label
+                            htmlFor="clockOut"
+                            className="text-sm text-slate-700 dark:text-slate-300"
+                          >
+                            Clock Out:
+                          </label>
+                          <input
+                            type="time"
+                            id="clockOut"
+                            value={clockOut}
+                            onChange={(e) => setClockOut(e.target.value)}
+                            className="w-full px-2 py-1 border rounded bg-white/80 dark:bg-slate-800/60"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+                              onClick={() =>
+                                handleUpdateEmployeeTime(employee.userId)
+                              }
+                            >
+                              Update Time
+                            </button>
+                            <button
+                              className="inline-flex items-center px-3 py-1 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded"
+                              onClick={() =>
+                                handleUpdateEmployeeTime(employee.userId, true)
+                              }
+                            >
+                              Clear Time
+                            </button>
+                          </div>
+                        </div>
                       )}
+
+                      <div className="flex flex-col gap-1 items-center">
+                        <button
+                          onClick={() => {
+                            setSearchTimecards(!searchTimecards);
+                          }}
+                          className="flex gap-1 items-center"
+                        >
+                          <b>
+                            {searchTimecards ? "Timecard Search" : "Timecards"}
+                          </b>
+                          <div className="btn btn-round p-1">
+                            {!searchTimecards ? <IoSearch /> : <IoClose />}
+                          </div>
+                        </button>
+
+                        {searchTimecards ? (
+                          <TimecardsSearch
+                            userId={employee.userId}
+                            companyId={company._id}
+                          />
+                        ) : (
+                          <Timecards
+                            userId={employee.userId}
+                            companyId={company._id}
+                            key={refreshTimecards}
+                            hourlyRate={employee.hourlyRate}
+                          />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ type SortDir = "asc" | "desc";
 interface Props {
   userId: string;
   companyId: string;
+  hourlyRate?: number;
 }
 
 const SORT_OPTIONS: {
@@ -29,7 +30,7 @@ const SORT_OPTIONS: {
   { field: "hours", label: "Hours", icon: <Clock size={14} /> },
 ];
 
-const Timecards = ({ userId, companyId }: Props) => {
+const Timecards = ({ userId, companyId, hourlyRate }: Props) => {
   const { timecards, fetchTimecards, loading, error } = useTimecards(
     userId,
     companyId,
@@ -149,6 +150,7 @@ const Timecards = ({ userId, companyId }: Props) => {
                 ownerId={userId}
                 fetchTimecards={fetchTimecards}
                 forceExpand={expandAll}
+                hourlyRate={hourlyRate}
               />
             ))}
           </div>

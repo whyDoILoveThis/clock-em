@@ -13,6 +13,7 @@ export interface IDay extends Document {
   clockInStatus: boolean;
   hoursWorked?: number;
   breaks?: IBreak[];
+  pay?: number;
 }
 
 const BreakSchema = new Schema<IBreak>({
@@ -54,6 +55,11 @@ const DaySchema = new Schema<IDay>({
     type: [BreakSchema],
     required: false,
     default: [],
+  },
+  pay: {
+    type: Number,
+    required: false,
+    default: 0,
   },
 });
 

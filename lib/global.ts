@@ -20,6 +20,38 @@ export const calculateHoursWorked = (clockIn: Date, clockOut: Date): number => {
   return diffMs / (1000 * 60 * 60);
 };
 
+// Calculate hours worked accounting for breaks
+export const calculateHoursWorkedWithBreaks = (
+  clockIn: Date,
+  clockOut: Date,
+  breaks?: Array<{ startTime: Date | string; endTime?: Date | string | null }>
+): number => {
+  let totalMs = clockOut.getTime() - clockIn.getTime();
+
+  if (breaks && breaks.length > 0) {
+    // Subtract break time from total
+    const breakTimeMs = breaks.reduce((acc, breakPeriod) => {
+      if (!breakPeriod.startTime || !breakPeriod.endTime) return acc;
+
+      const breakStart =
+        typeof breakPeriod.startTime === "string"
+          ? new Date(breakPeriod.startTime).getTime()
+          : breakPeriod.startTime.getTime();
+
+      const breakEnd =
+        typeof breakPeriod.endTime === "string"
+          ? new Date(breakPeriod.endTime).getTime()
+          : breakPeriod.endTime.getTime();
+
+      return acc + (breakEnd - breakStart);
+    }, 0);
+
+    totalMs -= breakTimeMs;
+  }
+
+  return Math.max(0, totalMs / (1000 * 60 * 60)); // Never negative
+};
+
 // Central-timezone "today" as YYYY-MM-DD
 export const todayCentral = (): string => nowCentral().toISODate()!;
 
@@ -36,6 +68,7 @@ export const initializeWeek = (mondayISO: string): Day[] => {
       clockInStatus: false,
       hoursWorked: 0,
       breaks: [],
+      pay: 0,
     });
   }
 

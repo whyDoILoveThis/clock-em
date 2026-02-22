@@ -3,7 +3,7 @@ import User from '@/models/User';
 import Timecard from '@/models/Timecard';
 import { DateTime } from 'luxon';
 import { nowCentral } from '@/lib/dates';
-import { calculateHoursWorked, getMonday, todayCentral } from '@/lib/global';
+import { calculateHoursWorked, calculateHoursWorkedWithBreaks, getMonday, todayCentral } from '@/lib/global';
 
 
 
@@ -104,15 +104,23 @@ export async function POST(req: Request) {
     day.clockInStatus = false;
 
     if (day.clockIn instanceof Date && day.clockOut instanceof Date) {
-      day.hoursWorked = calculateHoursWorked(day.clockIn, day.clockOut);
+      // Calculate hours worked, accounting for breaks
+      day.hoursWorked = calculateHoursWorkedWithBreaks(
+        day.clockIn,
+        day.clockOut,
+        day.breaks
+      );
     } else {
       return NextResponse.json({ error: 'Invalid time format' }, { status: 400 });
     }
 
-    // 💰 Calculate pay
+    // 💰 Calculate pay for today
     const payForToday = day.hoursWorked * hourlyRate;
+    day.pay = payForToday;
+
+    // 💰 Calculate total pay for the week
     thisWeek.totalPay = (thisWeek.days || []).reduce(
-      (acc, d) => acc + (d.hoursWorked || 0) * hourlyRate,
+      (acc, d) => acc + (d.pay || 0),
       0
     );
 

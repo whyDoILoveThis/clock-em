@@ -48,7 +48,7 @@ const ItsDropdown = ({
       <div className="relative">
         <button
           type="button"
-          className={`cursor-pointer mb-1 ${btnClassNames}`}
+          className={`cursor-pointer transition-all duration-200 ${btnClassNames}`}
           ref={dropBtnRef}
           onClick={handleToggle}
         >
@@ -58,17 +58,30 @@ const ItsDropdown = ({
         <div
           onClick={() => closeWhenClicked && handleToggle()}
           ref={dropdownRef}
-          className={`absolute selection:bg-transparent transition-all duration-400 z-50 min-w-[8rem] rounded-md border bg-slate-500 dark:bg-slate-700 bg-opacity-80 shadow-md ${
+          className={`absolute selection:bg-transparent transition-all duration-300 z-50 min-w-[10rem] rounded-xl overflow-hidden ${
             isOpen
-              ? `opacity-100 p-2 w-fit h-fit overflow-visible ${
-                  menuClassNames && menuClassNames
-                }`
-              : "opacity-0 p-0 w-0 h-0 overflow-hidden"
+              ? `opacity-100 p-3 w-fit h-fit overflow-visible`
+              : "opacity-0 p-0 w-0 h-0 overflow-hidden pointer-events-none"
           }`}
+          style={{
+            transform: isOpen
+              ? "scale(1) translateY(0)"
+              : "scale(0.95) translateY(-8px)",
+            transformOrigin: "top center",
+          }}
         >
-          <div className="z-50 flex flex-col gap-2">
-            <div className="z-0 absolute left-0 right-0 top-0 bottom-0 rounded-md backdrop-blur-md"></div>{" "}
-            <ul className="text-shadow z-50">{children}</ul>
+          {/* Gradient border effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-white/10 to-transparent dark:from-slate-400/20 dark:via-slate-500/10 dark:to-transparent rounded-xl pointer-events-none" />
+
+          {/* Background with glass effect */}
+          <div className="absolute inset-0 rounded-xl backdrop-blur-xl bg-white/20 dark:bg-slate-900/30 border border-white/20 dark:border-slate-700/30 pointer-events-none" />
+
+          {/* Shadow effect */}
+          <div className="absolute -inset-1 rounded-xl -z-10 blur-xl opacity-20 dark:opacity-30 bg-gradient-to-br from-blue-500 to-purple-500 pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-10 flex flex-col gap-1">
+            <ul className="space-y-1">{children}</ul>
           </div>
         </div>
       </div>

@@ -27,6 +27,7 @@ interface Props {
   ownerId?: string;
   fetchTimecards?: () => Promise<void>;
   forceExpand?: boolean;
+  hourlyRate?: number;
 }
 
 const SHORT_DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -37,20 +38,61 @@ const TimecardComponent = ({
   ownerId,
   fetchTimecards,
   forceExpand,
+  hourlyRate = 0,
 }: Props) => {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  // Tick every second when any day is actively clocked in (for realtime hours/pay)
+  const isClockedIn = timecard.days.some((d) => d.clockInStatus === true);
+
+  useEffect(() => {
+    if (!isClockedIn) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isClockedIn]);
 
   // Respond to parent "expand all / collapse all"
   useEffect(() => {
     if (forceExpand !== undefined) setExpanded(forceExpand);
   }, [forceExpand]);
 
-  const totalHours =
-    timecard.totalHours ??
-    timecard.days.reduce((acc, d) => acc + (d.hoursWorked || 0), 0);
+  // Helper: compute live hours for a day (accounts for breaks)
+  const getLiveHours = (day: (typeof timecard.days)[0]) => {
+    if (day.clockInStatus && day.clockIn && !day.clockOut) {
+      const clockInMs = new Date(day.clockIn).getTime();
+      let totalMs = now - clockInMs;
+      // Subtract completed breaks
+      if (day.breaks) {
+        for (const b of day.breaks) {
+          if (b.endTime) {
+            totalMs -=
+              new Date(b.endTime).getTime() - new Date(b.startTime).getTime();
+          } else {
+            // Currently on break — subtract from start to now
+            totalMs -= now - new Date(b.startTime).getTime();
+          }
+        }
+      }
+      return Math.max(0, totalMs / (1000 * 60 * 60));
+    }
+    return day.hoursWorked || 0;
+  };
 
-  const isClockedIn = timecard.days.some((d) => d.clockInStatus === true);
+  // Helper: compute live pay for a day
+  const getLivePay = (day: (typeof timecard.days)[0]) => {
+    const hours = getLiveHours(day);
+    if (day.clockInStatus && day.clockIn && !day.clockOut) {
+      return hours * hourlyRate;
+    }
+    return day.pay || 0;
+  };
+
+  // Compute live totals
+  const totalHours = timecard.days.reduce((acc, d) => acc + getLiveHours(d), 0);
+  const totalPay = timecard.days.reduce((acc, d) => acc + getLivePay(d), 0);
+
   const isOnBreak = timecard.days.some(
     (d) => d.clockInStatus === true && d.breaks?.some((b) => !b.endTime),
   );
@@ -130,7 +172,7 @@ const TimecardComponent = ({
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
               <DollarSign size={11} />
-              {timecard.totalPay.toFixed(2)}
+              {totalPay.toFixed(2)}
             </span>
             <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 ring-1 ring-indigo-400/20">
               <Timer size={11} />
@@ -202,8 +244,10 @@ const TimecardComponent = ({
               day: (typeof timecard.days)[0],
               index: number,
             ) => {
-              const hours = Math.floor(day.hoursWorked);
-              const minutes = Math.round((day.hoursWorked - hours) * 60);
+              const liveHours = getLiveHours(day);
+              const livePay = getLivePay(day);
+              const hours = Math.floor(liveHours);
+              const minutes = Math.round((liveHours - hours) * 60);
               const isToday =
                 DateTime.fromISO(
                   typeof day.date === "string"
@@ -218,7 +262,7 @@ const TimecardComponent = ({
                 searchTerm.toString().split("T")[0] ===
                   new Date(day.date).toISOString().split("T")[0];
               const isActive = day.clockInStatus === true;
-              const hasWorked = day.hoursWorked > 0;
+              const hasWorked = liveHours > 0;
               const isOnBreak = day.breaks?.some((b) => !b.endTime) ?? false;
 
               return (
@@ -333,19 +377,39 @@ const TimecardComponent = ({
                   )}
 
                   {/* Hours pill */}
-                  <div
-                    className={`
-                      self-start inline-flex items-center gap-1 text-xs font-medium
-                      px-2 py-0.5 rounded-md
-                      ${
-                        hasWorked
-                          ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
-                          : "bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500"
-                      }
-                    `}
-                  >
-                    <Clock size={11} />
-                    {hours > 0 || minutes > 0 ? `${hours}h ${minutes}m` : "0h"}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div
+                      className={`
+                        self-start inline-flex items-center gap-1 text-xs font-medium
+                        px-2 py-0.5 rounded-md
+                        ${
+                          hasWorked
+                            ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+                            : "bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500"
+                        }
+                      `}
+                    >
+                      <Clock size={11} />
+                      {hours > 0 || minutes > 0
+                        ? `${hours}h ${minutes}m`
+                        : "0h"}
+                    </div>
+
+                    {/* Pay pill */}
+                    <div
+                      className={`
+                        self-start inline-flex items-center gap-1 text-xs font-medium
+                        px-2 py-0.5 rounded-md
+                        ${
+                          livePay > 0
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500"
+                        }
+                      `}
+                    >
+                      <DollarSign size={11} />
+                      {livePay.toFixed(2)}
+                    </div>
                   </div>
                 </div>
               );
@@ -360,6 +424,20 @@ const TimecardComponent = ({
                 {/* Sat–Sun: 1 col mobile, 2 col sm+ */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {weekend.map((day, i) => renderDay(day, i + 5))}
+                </div>
+
+                {/* Weekly Summary */}
+                <div className="mt-2 pt-3 border-t border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                      <Timer size={13} />
+                      {parseFloat(totalHours.toFixed(2))}h total
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <DollarSign size={13} />
+                    {totalPay.toFixed(2)} total
+                  </div>
                 </div>
               </div>
             );

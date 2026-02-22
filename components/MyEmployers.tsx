@@ -154,7 +154,7 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                         size={13}
                         className="text-slate-400 shrink-0"
                       />
-                      ${company.hourlyRate}/hr
+                      {company.hourlyRate}/hr
                     </div>
                   </div>
 
@@ -295,7 +295,11 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                           companyId={company.userId}
                         />
                       ) : (
-                        <Timecards userId={userId} companyId={company.userId} />
+                        <Timecards
+                          userId={userId}
+                          companyId={company.userId}
+                          hourlyRate={company.hourlyRate}
+                        />
                       )}
                     </article>
                   )}

@@ -83,6 +83,7 @@ export interface Day {
   clockInStatus: boolean;
   hoursWorked: number;
   breaks: Break[];
+  pay?: number;
 }
 
 
