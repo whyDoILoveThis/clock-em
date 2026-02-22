@@ -6,7 +6,7 @@ import { Day } from '@/types/types.type';
 import { NextResponse } from 'next/server';
 import { DateTime } from 'luxon';
 import { nowCentral } from '@/lib/dates';
-import { getMonday, initializeWeek } from '@/lib/global';
+import { getMonday, initializeWeek, todayCentral } from '@/lib/global';
 
 
 
@@ -18,14 +18,13 @@ export async function POST(req: Request) {
 
    
 
-    // Get Monday of the current week
-    const today = new Date();
-    const currentMonday = getMonday(new Date(today));
+    // Get Monday of the current week (Central timezone)
+    const currentMonday = getMonday();
 
     const existingTimecard = await Timecard.findOne({
       companyId,
       employeeId: userId,
-      weekStart: currentMonday.toISOString().split('T')[0],
+      weekStart: currentMonday,
     });
 
     
@@ -37,7 +36,7 @@ export async function POST(req: Request) {
       currentTimecard = await Timecard.create({
         companyId,
         employeeId: userId,
-        weekStart: currentMonday.toISOString().split('T')[0],
+        weekStart: currentMonday,
         totalPay: 0,
         days: initializeWeek(currentMonday),
       });
@@ -46,11 +45,16 @@ export async function POST(req: Request) {
 
     
     
-    // Find today's day in the timecard
-    const todayFormatted = today.toISOString().split('T')[0];
-    const day = currentTimecard.days && currentTimecard.days.find(d => d.date && new Date(d.date).toISOString().split('T')[0] === todayFormatted);
+    // Find today's day in the timecard (Central timezone)
+    const todayFormatted = todayCentral();
+    const day = currentTimecard.days && currentTimecard.days.find(d => {
+      if (!d.date) return false;
+      // Stored dates are UTC midnight calendar dates — read them back as UTC, not Central
+      const dayDate = typeof d.date === 'string' ? d.date.split('T')[0] : DateTime.fromJSDate(new Date(d.date)).toUTC().toISODate();
+      return dayDate === todayFormatted;
+    });
     console.log('today: ', todayFormatted);
-    console.log('day: ', day?.date && new Date(day.date).toISOString().split('T')[0]);
+    console.log('day: ', day?.date);
     console.log(day);
     
 

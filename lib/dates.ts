@@ -12,6 +12,6 @@ export const nowCentral = () =>
 export const hoursBetween = (startISO: string, endISO: string) =>
   DateTime.fromISO(startISO).diff(DateTime.fromISO(endISO), "hours").hours;
 
-// Get Monday of a given date
+// Get Monday of a given date (Luxon startOf("week") already returns Monday per ISO standard)
 export const getMonday = (dateISO: string) =>
-  DateTime.fromISO(dateISO).startOf("week").plus({ days: 1 }).toISODate();
+  DateTime.fromISO(dateISO).startOf("week").toISODate();

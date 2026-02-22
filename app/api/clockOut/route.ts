@@ -3,7 +3,7 @@ import User from '@/models/User';
 import Timecard from '@/models/Timecard';
 import { DateTime } from 'luxon';
 import { nowCentral } from '@/lib/dates';
-import { calculateHoursWorked, getMonday } from '@/lib/global';
+import { calculateHoursWorked, getMonday, todayCentral } from '@/lib/global';
 
 
 
@@ -24,10 +24,11 @@ export async function POST(req: Request) {
     if (!employer) return NextResponse.json({ error: 'Employer not found for this user' }, { status: 404 });
 
     const hourlyRate = employer.hourlyRate ?? 0;
-    const today = nowCentral().toJSDate();
-    const currentMonday = getMonday(new Date(today));
+    const today = nowCentral();
+    const todayISO = todayCentral();
+    const currentMonday = getMonday();
 
-    // ⏪ Pull recent timecards (limit 2 weeks back for safety/perf)
+    // ⏪ Pull recent timecards (limit 52 weeks back for safety/perf)
     const twoWeeksAgo = nowCentral().minus({ weeks: 52 }).toISODate();
 
     const timecards = await Timecard.find({
@@ -41,13 +42,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No recent timecards found' }, { status: 404 });
     }
 
+    // Helper to get YYYY-MM-DD from a day's date field
+    // Stored dates are UTC midnight calendar dates — read them back as UTC, not Central
+    const dayToISO = (d: any): string => {
+      if (!d.date) return '';
+      if (typeof d.date === 'string') return d.date.split('T')[0];
+      return DateTime.fromJSDate(new Date(d.date)).toUTC().toISODate()!;
+    };
+
     // 🧹 Clean up old days that never got clocked out
     timecards.forEach(tc => {
       tc.days?.forEach(d => {
         if (d.clockIn && !d.clockOut) {
           // If date is before today, nuke it
-          const dISO = new Date(String(d.date)).toISOString().split('T')[0];
-          const todayISO = today.toISOString().split('T')[0];
+          const dISO = dayToISO(d);
           if (dISO < todayISO) {
             d.clockIn = null;
             d.clockOut = null;
@@ -61,18 +69,19 @@ export async function POST(req: Request) {
     await Promise.all(timecards.map(tc => tc.save()));
 
     // ⏩ Now process *today’s* clockOut
-    const thisWeek = timecards.find(tc => 
-      new Date(String(tc.weekStart)).toISOString().split('T')[0] === currentMonday.toISOString().split('T')[0]
-    );
+    const thisWeek = timecards.find(tc => {
+      if (!tc.weekStart) return false;
+      const wsISO = typeof tc.weekStart === 'string'
+        ? (tc.weekStart as string).split('T')[0]
+        : DateTime.fromJSDate(new Date(tc.weekStart)).toUTC().toISODate();
+      return wsISO === currentMonday;
+    });
     if (!thisWeek) {
       console.log('No timecard found for this week');
       return NextResponse.json({ error: 'Timecard not found for this week' }, { status: 404 });
     }
 
-    const todayFormatted = today.toISOString().split('T')[0];
-    const day = thisWeek.days?.find(d =>
-      new Date(String(d.date)).toISOString().split('T')[0] === todayFormatted
-    );
+    const day = thisWeek.days?.find(d => dayToISO(d) === todayISO);
 
     if (!day) {
       return NextResponse.json({ error: 'No entry found for today' }, { status: 404 });
@@ -91,7 +100,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ Normal clockOut
-    day.clockOut = today;
+    day.clockOut = today.toJSDate();
     day.clockInStatus = false;
 
     if (day.clockIn instanceof Date && day.clockOut instanceof Date) {

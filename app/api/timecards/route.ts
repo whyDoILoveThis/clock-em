@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import User from '@/models/User';
 import Timecard from '@/models/Timecard';
 import { getMonday, initializeWeek } from '@/lib/global';
+import { nowCentral } from '@/lib/dates';
 
 // Define the expected headers type
 interface CustomHeaders extends Headers {
@@ -45,13 +46,12 @@ export async function GET(req: Request) {
 
   // 🧼 If there are no timecards, create one for the current week
 if (timecards.length === 0) {
-  const today = new Date();
-  const currentMonday = getMonday(today);
+  const currentMonday = getMonday();
 
   const newTimecard = await Timecard.create({
     companyId,
     employeeId: userId,
-    weekStart: currentMonday.toISOString().split('T')[0],
+    weekStart: currentMonday,
     totalPay: 0,
     days: initializeWeek(currentMonday),
   });
