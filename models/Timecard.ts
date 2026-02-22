@@ -35,6 +35,10 @@ export const TimecardSchema = new Schema<ITimecard>({
   },
 });
 
-// ✅ Export both
-const Timecard: Model<ITimecard> = mongoose.models.Timecard || model<ITimecard>('Timecard', TimecardSchema);
+// Force re-registration so schema changes (e.g. adding breaks to Day) are picked up
+// Next.js hot-reload caches mongoose.models — stale schemas silently strip new fields
+if (mongoose.models.Timecard) {
+  mongoose.deleteModel('Timecard');
+}
+const Timecard: Model<ITimecard> = model<ITimecard>('Timecard', TimecardSchema);
 export default Timecard;

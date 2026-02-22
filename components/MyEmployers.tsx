@@ -45,8 +45,30 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
         const thisCompanyIsSelected = openCompanyCardIndex === index;
 
         let isClockedIn = false;
+        let dbClockInTime: Date | null = null;
+        let dbBreakCount = 0;
+        let dbIsOnBreak = false;
+        let dbBreaks: { startTime: Date; endTime: Date | null }[] = [];
         timecards.map((timecard) => {
-          isClockedIn = timecard.days.some((day) => day.clockInStatus === true);
+          const activeDay = timecard.days.find(
+            (day) => day.clockInStatus === true,
+          );
+          if (activeDay) {
+            isClockedIn = true;
+            if (activeDay.clockIn) {
+              dbClockInTime = new Date(activeDay.clockIn);
+            }
+            if (activeDay.breaks) {
+              dbBreakCount = activeDay.breaks.filter(
+                (b) => b.endTime !== null,
+              ).length;
+              dbIsOnBreak = activeDay.breaks.some((b) => b.endTime === null);
+              dbBreaks = activeDay.breaks.map((b) => ({
+                startTime: new Date(b.startTime),
+                endTime: b.endTime ? new Date(b.endTime) : null,
+              }));
+            }
+          }
         });
 
         return (
@@ -99,8 +121,12 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
               {/* Shows clocked-in dot on collapsed pill */}
               {!thisCompanyIsSelected && isClockedIn && (
                 <span className="relative flex h-2 w-2 ml-1">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  <span
+                    className={`animate-ping absolute inline-flex h-full w-full rounded-full ${dbIsOnBreak ? "bg-amber-400" : "bg-green-400"} opacity-60`}
+                  ></span>
+                  <span
+                    className={`relative inline-flex rounded-full h-2 w-2 ${dbIsOnBreak ? "bg-amber-500" : "bg-green-500"}`}
+                  ></span>
                 </span>
               )}
             </div>
@@ -135,14 +161,24 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                   {/* Clocked in/out badge */}
                   <div className="shrink-0">
                     {isClockedIn ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border ${
+                          dbIsOnBreak
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                        }`}
+                      >
                         {!timecardsLoading && timecardsReady ? (
                           <>
                             <span className="relative flex h-1.5 w-1.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                              <span
+                                className={`animate-ping absolute inline-flex h-full w-full rounded-full ${dbIsOnBreak ? "bg-amber-400" : "bg-green-400"} opacity-60`}
+                              ></span>
+                              <span
+                                className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dbIsOnBreak ? "bg-amber-500" : "bg-green-500"}`}
+                              ></span>
                             </span>
-                            Clocked In
+                            {dbIsOnBreak ? "On Break" : "Clocked In"}
                           </>
                         ) : (
                           <Loader color="green" />
@@ -214,6 +250,10 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                         userId={userId}
                         companyId={company.userId}
                         isClockedIn={isClockedIn}
+                        dbClockInTime={dbClockInTime}
+                        dbBreakCount={dbBreakCount}
+                        dbIsOnBreak={dbIsOnBreak}
+                        dbBreaks={dbBreaks}
                         timecardsLoading={timecardsLoading}
                         timecardsReady={timecardsReady}
                         refetch={fetchTimecards}

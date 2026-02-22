@@ -35,6 +35,7 @@ export const initializeWeek = (mondayISO: string): Day[] => {
       clockOut: null,
       clockInStatus: false,
       hoursWorked: 0,
+      breaks: [],
     });
   }
 

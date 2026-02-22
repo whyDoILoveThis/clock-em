@@ -71,12 +71,18 @@ export interface ClockInRecord {
   clockOutTime: Date | null;
 }
 
+export interface Break {
+  startTime: Date;
+  endTime: Date | null;
+}
+
 export interface Day {
   date: string;
   clockIn: Date | null;
   clockOut: Date | null;
   clockInStatus: boolean;
   hoursWorked: number;
+  breaks: Break[];
 }
 
 

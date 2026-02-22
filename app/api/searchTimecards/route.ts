@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     let timecards = await Timecard.find({
       companyId: employerId,
       employeeId: userId,
-});
+    }).lean();
 
     // Search for matching timecard by weekStart or clockIn date
     const theTimecard = timecards.find(tc => {

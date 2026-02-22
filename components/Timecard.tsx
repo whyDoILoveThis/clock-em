@@ -13,6 +13,7 @@ import IconThreeDots from "./icons/IconThreeDots";
 import {
   ChevronDown,
   Clock,
+  Coffee,
   LogIn,
   LogOut,
   Trash2,
@@ -50,6 +51,9 @@ const TimecardComponent = ({
     timecard.days.reduce((acc, d) => acc + (d.hoursWorked || 0), 0);
 
   const isClockedIn = timecard.days.some((d) => d.clockInStatus === true);
+  const isOnBreak = timecard.days.some(
+    (d) => d.clockInStatus === true && d.breaks?.some((b) => !b.endTime),
+  );
 
   const handleDeleteTimecard = async (weekStart: Date) => {
     if (confirm("Are you sure you want to delete this timecard?")) {
@@ -134,8 +138,12 @@ const TimecardComponent = ({
             </span>
             {isClockedIn && (
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isOnBreak ? "bg-amber-400" : "bg-green-400"} opacity-60`}
+                ></span>
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${isOnBreak ? "bg-amber-500" : "bg-green-500"}`}
+                ></span>
               </span>
             )}
           </div>
@@ -211,6 +219,7 @@ const TimecardComponent = ({
                   new Date(day.date).toISOString().split("T")[0];
               const isActive = day.clockInStatus === true;
               const hasWorked = day.hoursWorked > 0;
+              const isOnBreak = day.breaks?.some((b) => !b.endTime) ?? false;
 
               return (
                 <div
@@ -250,10 +259,14 @@ const TimecardComponent = ({
                     {isActive && (
                       <span
                         className="relative flex h-2 w-2"
-                        title="Clocked in"
+                        title={isOnBreak ? "On break" : "Clocked in"}
                       >
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isOnBreak ? "bg-amber-400" : "bg-green-400"} opacity-60`}
+                        ></span>
+                        <span
+                          className={`relative inline-flex rounded-full h-2 w-2 ${isOnBreak ? "bg-amber-500" : "bg-green-500"}`}
+                        ></span>
                       </span>
                     )}
                   </div>
@@ -290,6 +303,34 @@ const TimecardComponent = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Breaks */}
+                  {day.breaks && day.breaks.length > 0 && (
+                    <div className="flex flex-col gap-0.5">
+                      {day.breaks.map((b, bi) => (
+                        <div
+                          key={bi}
+                          className={`flex items-center gap-1.5 text-xs ${
+                            !b.endTime
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-slate-500 dark:text-slate-400"
+                          }`}
+                        >
+                          <Coffee
+                            size={11}
+                            className="text-amber-500 shrink-0"
+                          />
+                          <span className="font-mono text-[11px]">
+                            {formatClockInOutTime(new Date(b.startTime))}
+                            {" – "}
+                            {b.endTime
+                              ? formatClockInOutTime(new Date(b.endTime))
+                              : "now"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Hours pill */}
                   <div

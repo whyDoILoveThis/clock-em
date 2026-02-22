@@ -3,6 +3,7 @@ import User from '@/models/User';
 import Timecard from '@/models/Timecard';
 import { getMonday, initializeWeek } from '@/lib/global';
 import { nowCentral } from '@/lib/dates';
+import dbConnect from '@/lib/mongodb';
 
 // Define the expected headers type
 interface CustomHeaders extends Headers {
@@ -12,6 +13,7 @@ interface CustomHeaders extends Headers {
 
 export async function GET(req: Request) {
   try {
+    await dbConnect();
     const headers = req.headers as CustomHeaders; // Cast to CustomHeaders type
     const userId = headers.get('userId'); // Safely get userId
     const companyId = headers.get('companyId'); // Safely get companyId
@@ -39,10 +41,11 @@ export async function GET(req: Request) {
     }
 
     // Retrieve the timecards for the specified employer
-    let timecards = await Timecard.find({
+    // .lean() returns raw MongoDB docs — ensures new fields like breaks aren't stripped by schema
+    let timecards: any[] = await Timecard.find({
       companyId,
       employeeId: userId,
-});
+    }).lean();
 
   // 🧼 If there are no timecards, create one for the current week
 if (timecards.length === 0) {
@@ -56,7 +59,7 @@ if (timecards.length === 0) {
     days: initializeWeek(currentMonday),
   });
 
-  timecards = [newTimecard]; // Set the new one as the only entry
+  timecards = [newTimecard.toObject() as any]; // Convert to plain object to match lean()
 }
 
     return NextResponse.json({ timecards }, { status: 200 });
