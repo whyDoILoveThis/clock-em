@@ -215,9 +215,10 @@ const CompanyCard = ({
         stiffness: 200,
         damping: 28,
         mass: 1.2,
+        delay: isOpen ? 0 : 0.15,
       }}
       className={`
-        relative flex flex-col rounded-2xl ${isOpen ? "cursor-default" : "cursor-pointer"}
+        relative flex flex-col rounded-2xl overflow-hidden ${isOpen ? "cursor-default" : "cursor-pointer"}
         ${
           isOpen
             ? "mx-2 max-w-lg bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/30 dark:border-slate-700/40 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.4)]"
