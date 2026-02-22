@@ -4,8 +4,15 @@ import React, { useEffect, useState } from "react";
 import ClockInOut from "./ClockInOut";
 import Timecards from "./Timecards";
 import TimecardsSearch from "./TimecardSearch";
-import { IoClose } from "react-icons/io5";
-import { GoSearch } from "react-icons/go";
+import {
+  X,
+  Search,
+  MapPin,
+  Phone,
+  DollarSign,
+  Clock,
+  Timer,
+} from "lucide-react";
 import { useTimecards } from "@/hooks/useTimecards";
 import Loader from "./Loader";
 
@@ -23,7 +30,7 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
   const companyId = companies[openCompanyCardIndex]?.userId || "";
   const { timecards, fetchTimecards, loading, error } = useTimecards(
     userId,
-    companyId
+    companyId,
   );
   const timecardsLoading = loading;
   const [timecardsReady, setTimecardsReady] = useState(false);
@@ -33,13 +40,8 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
   }, [timecards]);
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <h2 className="text-2xl font-semibold mt-4 mb-2 border-b pb-2 text-indigo-600 dark:text-indigo-300">
-        My Employers
-      </h2>
+    <div className="flex flex-col items-center gap-3 w-full">
       {companies.map((company, index) => {
-        console.log(company);
-
         const thisCompanyIsSelected = openCompanyCardIndex === index;
 
         let isClockedIn = false;
@@ -53,110 +55,161 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
               openCompanyCardIndex !== index && setOpenCompanyCardIndex(index)
             }
             className={`
-          shadow-2xl shadow-purple-950
-        relative border w-fit flex flex-col m-4 p-2 px-3 ${
-          thisCompanyIsSelected
-            ? "rounded-2xl w-full max-w-[400px]"
-            : "rounded-full cursor-pointer"
-        } `}
+              relative flex flex-col rounded-2xl transition-all duration-300
+              ${
+                thisCompanyIsSelected
+                  ? "w-full max-w-lg p-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/30 dark:border-slate-700/40 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.4)]"
+                  : "w-fit px-4 py-2.5 cursor-pointer bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl border border-white/30 dark:border-slate-700/40 shadow-[0_2px_12px_-2px_rgba(99,102,241,0.08)] dark:shadow-[0_2px_12px_-2px_rgba(99,102,241,0.15)] hover:bg-white/60 dark:hover:bg-slate-800/60 hover:shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)]"
+              }
+            `}
             key={index}
           >
+            {/* Close button */}
             {thisCompanyIsSelected && (
               <button
-                className="absolute top-2 right-2 btn btn-round"
-                onClick={() => setOpenCompanyCardIndex(-9)}
+                className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenCompanyCardIndex(-9);
+                  setShowTimeclock(false);
+                  setShowTimecard(false);
+                }}
               >
-                <IoClose width={20} height={20} />
+                <X size={16} />
               </button>
             )}
-            <div className="flex items-center  gap-1">
+
+            {/* Company name + logo */}
+            <div className="flex items-center gap-2.5">
               {company.logoUrl && (
                 <Image
-                  width={25}
-                  height={25}
+                  width={thisCompanyIsSelected ? 32 : 22}
+                  height={thisCompanyIsSelected ? 32 : 22}
                   src={company.logoUrl}
                   alt={`${company.name}'s logo`}
+                  className="rounded-lg object-cover"
                 />
               )}
-              <b>{company.name}</b>
+              <span
+                className={`font-semibold ${thisCompanyIsSelected ? "text-lg text-slate-900 dark:text-white" : "text-sm text-slate-800 dark:text-slate-200"}`}
+              >
+                {company.name}
+              </span>
+
+              {/* Shows clocked-in dot on collapsed pill */}
+              {!thisCompanyIsSelected && isClockedIn && (
+                <span className="relative flex h-2 w-2 ml-1">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+              )}
             </div>
+
+            {/* Expanded content */}
             {thisCompanyIsSelected && (
-              <div>
-                <div className="flex items-start gap-4">
-                  <div>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
-                      {company.address}
-                    </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
-                      {company.phone}
-                    </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+              <div className="mt-4 space-y-4">
+                {/* Company details + status */}
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    {company.address && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                        <MapPin size={13} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{company.address}</span>
+                      </div>
+                    )}
+                    {company.phone && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                        <Phone size={13} className="text-slate-400 shrink-0" />
+                        {company.phone}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                      <DollarSign
+                        size={13}
+                        className="text-slate-400 shrink-0"
+                      />
                       ${company.hourlyRate}/hr
-                    </p>
+                    </div>
+                  </div>
+
+                  {/* Clocked in/out badge */}
+                  <div className="shrink-0">
                     {isClockedIn ? (
-                      <p className="inline-flex items-center rounded-full px-2 py-0.5 text-sm bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         {!timecardsLoading && timecardsReady ? (
-                          "clocked in"
+                          <>
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                            </span>
+                            Clocked In
+                          </>
                         ) : (
                           <Loader color="green" />
                         )}
-                      </p>
+                      </span>
                     ) : (
-                      <p className="inline-flex items-center rounded-full px-2 py-0.5 text-sm bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/15">
                         {!timecardsLoading && timecardsReady ? (
-                          "clocked out"
+                          "Clocked Out"
                         ) : (
                           <Loader color="red" />
                         )}
-                      </p>
+                      </span>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => {
-                      setShowTimeclock(true);
-                      setShowTimecard(false);
-                    }}
-                    className={`btn mt-1 ${
-                      showTimeclock &&
-                      "dark:bg-white dark:bg-opacity-20 hover:dark:bg-opacity-20 "
-                    }`}
-                  >
-                    Timeclock
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowTimecard(true);
-                      setShowTimeclock(false);
-                    }}
-                    className={`btn mt-1 ${
-                      !showTimeclock &&
-                      showTimecard &&
-                      "dark:bg-white dark:bg-opacity-20 hover:dark:bg-opacity-20 "
-                    }`}
-                  >
-                    Time Cards
-                  </button>
+
+                {/* Action tabs */}
+                <div className="flex items-center gap-1.5">
+                  <div className="inline-flex rounded-xl p-1 bg-white/40 dark:bg-slate-800/50 backdrop-blur-lg border border-white/20 dark:border-slate-700/40">
+                    <button
+                      onClick={() => {
+                        setShowTimeclock(true);
+                        setShowTimecard(false);
+                      }}
+                      className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                        showTimeclock
+                          ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      <Clock size={13} />
+                      Timeclock
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowTimecard(true);
+                        setShowTimeclock(false);
+                      }}
+                      className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                        showTimecard && !showTimeclock
+                          ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      <Timer size={13} />
+                      Timecards
+                    </button>
+                  </div>
 
                   {(showTimecard || showTimeclock) && (
                     <button
-                      className="btn btn-round h-fit mt-1 p-1 border-slate-700"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       onClick={() => {
                         setShowTimeclock(false);
                         setShowTimecard(false);
                       }}
                     >
-                      <IoClose width={20} height={20} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>
+
+                {/* Content sections */}
                 <article>
                   {showTimeclock && (
-                    <div>
-                      <h2 className=" flex gap-2 items-center pb-1 text-xl font-bold mt-2 mb-4 border-b">
-                        Timeclock
-                      </h2>
+                    <div className="pt-2">
                       <ClockInOut
                         userId={userId}
                         companyId={company.userId}
@@ -169,28 +222,33 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                   )}
 
                   {showTimecard && (
-                    <article>
-                      <h2 className="flex gap-2 items-center pb-1 text-xl  font-bold mt-2 mb-4 border-b">
-                        {!searchTimecards ? (
-                          <p>Timecards</p>
-                        ) : (
-                          <p>Timecard Search</p>
-                        )}
+                    <article className="pt-2">
+                      {/* Search toggle for timecards */}
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          {!searchTimecards ? "Timecards" : "Search Timecards"}
+                        </h3>
                         <button
-                          className="cursor-pointer"
-                          onClick={() => {
-                            setSearchTimecards(!searchTimecards);
-                          }}
+                          onClick={() => setSearchTimecards(!searchTimecards)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                            searchTimecards
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border border-rose-500/20"
+                              : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20"
+                          }`}
                         >
-                          {!searchTimecards ? (
-                            <GoSearch />
+                          {searchTimecards ? (
+                            <>
+                              <X size={13} />
+                              Close Search
+                            </>
                           ) : (
-                            <div className="btn p-1">
-                              <IoClose />
-                            </div>
+                            <>
+                              <Search size={13} />
+                              Search
+                            </>
                           )}
                         </button>
-                      </h2>
+                      </div>
                       {searchTimecards ? (
                         <TimecardsSearch
                           userId={userId}

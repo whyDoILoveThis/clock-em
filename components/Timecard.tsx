@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Timecard } from "@/types/types.type";
-import { formatClockInOutTime, formatWeekStartDate } from "@/lib/utils";
+import {
+  formatClockInOutTime,
+  formatWeekStartDate,
+  formatDayDate,
+} from "@/lib/utils";
 import axios from "axios";
 import { DateTime } from "luxon";
 import LoaderSpinSmall from "./Loader";
@@ -238,7 +242,7 @@ const TimecardComponent = ({
                         {SHORT_DAY[index] ?? ""}
                       </span>
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {formatWeekStartDate(new Date(day.date))}
+                        {formatDayDate(new Date(day.date))}
                       </span>
                     </div>
 

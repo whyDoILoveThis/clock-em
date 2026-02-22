@@ -49,6 +49,11 @@ export const formatWeekStartDate = (date: Date): string => {
   return date.toLocaleDateString(undefined, options);
 };
 
+export const formatDayDate = (date: Date): string => {
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', timeZone: 'UTC' };
+  return date.toLocaleDateString(undefined, options);
+};
+
 export const formatClockInOutTime = (date: Date): string => {
   const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', timeZone: 'CST' };
   return date.toLocaleTimeString(undefined, options);

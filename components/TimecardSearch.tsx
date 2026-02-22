@@ -1,7 +1,6 @@
-import { formatClockInOutDate, formatWeekStartDate } from "@/lib/utils"; // Ensure this utility is correctly imported
 import { Timecard } from "@/types/types.type";
-import React, { useEffect, useState } from "react";
-import { IoSearch } from "react-icons/io5";
+import React, { useEffect, useState, useCallback } from "react";
+import { Search, Calendar } from "lucide-react";
 import TimecardComponent from "./Timecard";
 
 interface Props {
@@ -10,44 +9,40 @@ interface Props {
 }
 
 const TimecardsSearch = ({ userId, companyId }: Props) => {
-  const [timecard, setTimecard] = useState<Timecard | null>(null); // Stores fetched timecards
+  const [timecard, setTimecard] = useState<Timecard | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  ); // Track search term (date)
-  const [error, setError] = useState<string | null>(null); // Track errors
+    new Date().toISOString().split("T")[0],
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm]);
-
-  // Handle the API call to fetch timecards
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/searchTimecards?searchTerm=${searchTerm}&userId=${userId}&companyId=${companyId}`, // Append the parameters to URL
-        {
-          method: "GET",
-        }
+        `/api/searchTimecards?searchTerm=${searchTerm}&userId=${userId}&companyId=${companyId}`,
+        { method: "GET" },
       );
 
       const data = await response.json();
 
       if (response.ok) {
-        setTimecard(data.timecards || []); // If timecards exist, set them
-        setError(null); // Clear previous errors if any
+        setTimecard(data.timecards || []);
+        setError(null);
       } else {
         console.error(data.error);
-        setError(data.error); // Handle any errors from backend
+        setError(data.error);
         setTimecard(null);
       }
     } catch (error) {
       console.error("Failed to search timecards", error);
-      setError("Failed to fetch timecards"); // Set general error message
+      setError("Failed to fetch timecards");
       setTimecard(null);
     }
-  };
+  }, [searchTerm, userId, companyId]);
 
-  // Handle form submission
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm) {
@@ -57,36 +52,46 @@ const TimecardsSearch = ({ userId, companyId }: Props) => {
     }
   };
 
-  console.log(timecard);
-
   return (
-    <div>
+    <div className="w-full">
       {/* Date Search Form */}
       <form
         onSubmit={handleSubmit}
-        className="mb-4 flex gap-4 items-center search-bar bg-slate-950 bg-opacity-80 rounded-full"
+        className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg border border-white/20 dark:border-slate-700/40 shadow-sm transition-all duration-200 focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500/40 mb-4"
       >
+        <Calendar
+          size={16}
+          className="text-slate-400 dark:text-slate-500 shrink-0"
+        />
         <input
           type="date"
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-          }}
-          className=""
+          onChange={(e) => setSearchTerm(e.target.value)}
           required
+          className="flex-1 bg-transparent outline-none text-sm text-slate-900 dark:text-white"
         />
-
-        <button type="submit">
-          <IoSearch />
+        <button
+          type="submit"
+          className="shrink-0 p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+        >
+          <Search size={16} />
         </button>
       </form>
 
       {/* Error Message */}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && (
+        <p className="text-sm text-rose-500 dark:text-rose-400 mb-4 px-1">
+          {error}
+        </p>
+      )}
 
-      {/* Display the Timecards */}
+      {/* Display the Timecard - already expanded */}
       {timecard && (
-        <TimecardComponent timecard={timecard} searchTerm={searchTerm} />
+        <TimecardComponent
+          timecard={timecard}
+          searchTerm={searchTerm}
+          forceExpand={true}
+        />
       )}
     </div>
   );

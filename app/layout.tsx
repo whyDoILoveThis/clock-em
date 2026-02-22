@@ -5,6 +5,8 @@ import "@/styles/Clerk.css";
 import "@/styles/ItsBtn.css";
 import { ClerkProvider, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import SplashPage from "@/components/SplashPage";
+import DemoAccountToast from "@/components/DemoAccountToast";
+import DemoSwitchOverlay from "@/components/DemoSwitchOverlay";
 import { ThemeProvider } from "next-themes";
 import Navbar from "@/components/Navbar";
 
@@ -30,10 +32,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <DemoSwitchOverlay />
             <SignedOut>
               <SplashPage />
             </SignedOut>
             <SignedIn>
+              <DemoAccountToast />
               <div className="w-screen h-fit flex justify-center">
                 <Navbar />
               </div>
