@@ -544,7 +544,7 @@ const DemoAccountToast = () => {
       {swipedOut && (
         <div
           ref={tabRef}
-          className="fixed left-2 top-36 -translate-y-1/2 z-50 sm:hidden touch-none select-none cursor-grab active:cursor-grabbing"
+          className="fixed left-2 top-3/4 -translate-y-1/2 z-50 sm:hidden touch-none select-none cursor-grab active:cursor-grabbing"
           onPointerDown={handleTabPointerDown}
           onPointerMove={handleTabPointerMove}
           onPointerUp={handleTabPointerUp}
@@ -558,7 +558,7 @@ const DemoAccountToast = () => {
 
       <div
         ref={containerRef}
-        className="fixed left-0 top-36 z-50 touch-none select-none"
+        className="fixed left-0 top-3/4 z-50 touch-none select-none"
         style={{
           transform: `translateY(-50%)`,
           willChange: "transform",
