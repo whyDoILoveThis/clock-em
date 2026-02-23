@@ -1,6 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import Loader from "./Loader";
-import { LogIn, LogOut, Clock, Pause, Play, Coffee } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  Clock,
+  Pause,
+  Play,
+  Coffee,
+  DollarSign,
+} from "lucide-react";
 
 interface BreakEntry {
   startTime: Date;
@@ -18,6 +26,7 @@ interface Props {
   timecardsLoading: boolean;
   timecardsReady: boolean;
   refetch: () => Promise<any>;
+  hourlyRate?: number;
 }
 
 const ClockInOut = ({
@@ -31,6 +40,7 @@ const ClockInOut = ({
   timecardsLoading,
   timecardsReady,
   refetch,
+  hourlyRate = 0,
 }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +49,7 @@ const ClockInOut = ({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [clockInTime, setClockInTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState("00:00:00");
+  const [livePay, setLivePay] = useState(0);
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [breakCount, setBreakCount] = useState(0);
   const [breakStartTime, setBreakStartTime] = useState<Date | null>(null);
@@ -114,12 +125,16 @@ const ClockInOut = ({
         const breakSec = getTotalBreakSeconds(breaks);
         const workSec = Math.max(0, totalSec - breakSec);
         setElapsed(formatDurationSeconds(workSec));
+
+        // Calculate live pay
+        const workHours = workSec / 3600;
+        setLivePay(workHours * hourlyRate);
       }, 1000);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [clockInTime, breaks]);
+  }, [clockInTime, breaks, hourlyRate]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], {
@@ -268,6 +283,27 @@ const ClockInOut = ({
                 {elapsed}
               </span>
             </div>
+
+            {/* Live pay */}
+            {hourlyRate > 0 && (
+              <div className="flex items-center justify-end pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+                <div className="flex items-center gap-1.5 border-2 border-emerald-500 rounded-full px-3 bg-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.5)]">
+                  <div className="relative inline-flex items-center justify-center w-4 h-4">
+                    <DollarSign
+                      size={16}
+                      className="text-emerald-600 dark:text-emerald-300 font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+                    />
+                    <DollarSign
+                      size={16}
+                      className="animate-ping absolute text-emerald-500 dark:text-emerald-300 opacity-80"
+                    />
+                  </div>
+                  <span className="font-mono text-lg font-bold text-emerald-700 dark:text-emerald-300 tabular-nums drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
+                    {livePay.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Break info */}
             {(breaks.length > 0 || isOnBreak) && (

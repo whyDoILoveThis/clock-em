@@ -257,6 +257,7 @@ const MyEmployers = ({ companies, userId, refetch }: Props) => {
                         timecardsLoading={timecardsLoading}
                         timecardsReady={timecardsReady}
                         refetch={fetchTimecards}
+                        hourlyRate={company.hourlyRate}
                       />
                     </div>
                   )}
