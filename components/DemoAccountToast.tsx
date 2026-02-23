@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { ChevronRight, AlertCircle } from "lucide-react";
 import { useUser, useSignIn, useClerk } from "@clerk/nextjs";
 
@@ -32,54 +38,411 @@ const DemoAccountToast = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isSwitching, setIsSwitching] = useState<DemoType | null>(null);
 
-  // Touch swipe state
-  const [swipedOut, setSwipedOut] = useState(false);
-  const touchStartX = useRef(0);
-  const touchDeltaX = useRef(0);
-  const [dragX, setDragX] = useState(0);
-  const isDragging = useRef(false);
+  // ===========================================
+  // GESTURE STATE & REFS
+  // ===========================================
+
+  // Visual state - whether toast is dismissed (swiped out/closed)
+  const [swipedOut, setSwipedOut] = useState(true);
+
+  // Ref to the main container for direct DOM manipulation (avoids React re-renders during drag)
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    isDragging.current = true;
-    setDragX(0);
+  // Ref to the swipe-back tab
+  const tabRef = useRef<HTMLDivElement>(null);
+
+  // Track if user prefers reduced motion
+  const prefersReducedMotion = useRef(false);
+
+  // Gesture tracking refs (using refs instead of state for 60fps performance)
+  const gestureState = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    lastX: 0,
+    lastTime: 0,
+    velocity: 0,
+    isHorizontalGesture: null as boolean | null, // null = undetermined, true = horizontal, false = vertical
+    pointerId: null as number | null,
+  });
+
+  // ===========================================
+  // GESTURE CONSTANTS
+  // ===========================================
+
+  // Peek amount when visible but not hovered (px)
+  const PEEK_WIDTH_VISIBLE = 16;
+
+  // Distance threshold (px) - minimum swipe distance to trigger dismiss/restore
+  const DISTANCE_THRESHOLD = 50;
+
+  // Velocity threshold (px/ms) - fast swipes dismiss regardless of distance
+  const VELOCITY_THRESHOLD = 0.35;
+
+  // Lock angle (degrees) - gestures within this angle from horizontal are considered horizontal
+  // tan(20°) ≈ 0.36, so if |deltaY/deltaX| < 0.36, it's horizontal
+  const LOCK_ANGLE_TAN = 0.36;
+
+  // Minimum movement (px) before we determine gesture direction
+  const DIRECTION_LOCK_THRESHOLD = 12;
+
+  // Animation duration for snap-back/dismiss (ms)
+  const ANIMATION_DURATION = 300;
+
+  // ===========================================
+  // REDUCED MOTION DETECTION
+  // ===========================================
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    prefersReducedMotion.current = mediaQuery.matches;
+
+    const handler = (e: MediaQueryListEvent) => {
+      prefersReducedMotion.current = e.matches;
+    };
+
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isDragging.current) return;
-      const delta = e.touches[0].clientX - touchStartX.current;
-      touchDeltaX.current = delta;
-      // Only allow dragging left (negative) to swipe out, or right to swipe back in
-      if (swipedOut) {
-        // When swiped out, allow right swipe to bring back
-        setDragX(Math.max(0, delta));
-      } else {
-        // When visible, allow left swipe to dismiss
-        setDragX(Math.min(0, delta));
-      }
+  // ===========================================
+  // TRANSFORM HELPERS
+  // ===========================================
+
+  /**
+   * Apply transform directly to DOM element (no React re-render)
+   * This is critical for 60fps smooth dragging
+   */
+  const applyTransform = useCallback(
+    (
+      element: HTMLElement | null,
+      translateX: number,
+      animate: boolean = false,
+    ) => {
+      if (!element) return;
+
+      const duration = prefersReducedMotion.current
+        ? "0ms"
+        : `${ANIMATION_DURATION}ms`;
+      element.style.transition = animate
+        ? `transform ${duration} cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+        : "none";
+      element.style.transform = `translateY(-50%) translateX(${translateX}px)`;
     },
-    [swipedOut],
+    [],
   );
 
-  const handleTouchEnd = useCallback(() => {
-    isDragging.current = false;
-    const threshold = 80;
-    if (swipedOut) {
-      // If swiped right enough, bring back
-      if (touchDeltaX.current > threshold) {
-        setSwipedOut(false);
+  /**
+   * Calculate the base X position based on current state
+   * When visible (not swiped out): shows PEEK_WIDTH_VISIBLE px peek
+   * When swiped out: fully hidden minus minimal peek
+   */
+  const getBasePosition = useCallback(
+    (isOut: boolean, containerWidth: number) => {
+      if (isOut) {
+        return -containerWidth + PEEK_WIDTH_VISIBLE; // Closed with small peek visible
       }
-    } else {
-      // If swiped left enough, dismiss
-      if (touchDeltaX.current < -threshold) {
+      return 0; // Fully visible
+    },
+    [],
+  );
+
+  // ===========================================
+  // POINTER EVENT HANDLERS
+  // ===========================================
+
+  /**
+   * Handle pointer down - start tracking gesture
+   */
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Only handle primary pointer (left mouse button, single touch)
+    if (!e.isPrimary) return;
+
+    const gs = gestureState.current;
+
+    // Initialize gesture tracking
+    gs.isDragging = true;
+    gs.startX = e.clientX;
+    gs.startY = e.clientY;
+    gs.currentX = e.clientX;
+    gs.lastX = e.clientX;
+    gs.lastTime = e.timeStamp;
+    gs.velocity = 0;
+    gs.isHorizontalGesture = null; // Reset direction lock
+    gs.pointerId = e.pointerId;
+
+    // Capture pointer for reliable tracking even if pointer leaves element
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
+
+  /**
+   * Handle pointer move - track drag position and velocity
+   */
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const gs = gestureState.current;
+
+      // Ignore if not dragging or different pointer
+      if (!gs.isDragging || e.pointerId !== gs.pointerId) return;
+
+      const deltaX = e.clientX - gs.startX;
+      const deltaY = e.clientY - gs.startY;
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
+
+      // ===========================================
+      // DIRECTION LOCK DETECTION
+      // ===========================================
+      // Wait for enough movement to determine if this is horizontal or vertical
+
+      if (gs.isHorizontalGesture === null) {
+        const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (totalMovement >= DIRECTION_LOCK_THRESHOLD) {
+          // Check if movement is predominantly horizontal (within 20° of horizontal)
+          if (absDeltaX > 0 && absDeltaY / absDeltaX <= LOCK_ANGLE_TAN) {
+            gs.isHorizontalGesture = true;
+          } else {
+            // Vertical gesture - release and let page scroll
+            gs.isHorizontalGesture = false;
+            gs.isDragging = false;
+            try {
+              (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+            } catch (err) {
+              // Safe to ignore
+            }
+            return;
+          }
+        } else {
+          // Not enough movement yet
+          return;
+        }
+      }
+
+      // If vertical, ignore
+      if (!gs.isHorizontalGesture) return;
+
+      // Prevent default to stop scrolling
+      e.preventDefault();
+
+      // ===========================================
+      // VELOCITY CALCULATION
+      // ===========================================
+
+      const now = e.timeStamp;
+      const timeDelta = now - gs.lastTime;
+
+      if (timeDelta > 0 && timeDelta < 100) {
+        const moveDelta = e.clientX - gs.lastX;
+        gs.velocity = 0.7 * (moveDelta / timeDelta) + 0.3 * gs.velocity;
+      }
+
+      gs.lastX = e.clientX;
+      gs.lastTime = now;
+      gs.currentX = e.clientX;
+
+      // ===========================================
+      // DIRECT DRAG TRANSFORM
+      // ===========================================
+      // Map drag movement to position in the range [closed peek, fully open]
+
+      const container = containerRef.current;
+      if (!container) return;
+
+      const containerWidth = container.offsetWidth;
+      const closedPos = -containerWidth + PEEK_WIDTH_VISIBLE; // Closed with small peek
+      const openPos = 0; // Fully visible
+
+      // Start position depends on current state
+      const startPos = swipedOut ? closedPos : openPos;
+
+      // Apply delta to start position and clamp to valid range
+      let finalPos = startPos + deltaX;
+      finalPos = Math.max(closedPos, Math.min(openPos, finalPos));
+
+      // Apply directly to DOM
+      applyTransform(container, finalPos, false);
+    },
+    [applyTransform, swipedOut],
+  );
+
+  /**
+   * Handle pointer up - determine dismiss/restore and animate
+   */
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const gs = gestureState.current;
+
+      // Ignore if not dragging or different pointer
+      if (!gs.isDragging || e.pointerId !== gs.pointerId) return;
+
+      gs.isDragging = false;
+
+      // Release pointer capture
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch (err) {
+        // Safe to ignore
+      }
+
+      // If we never determined direction (micro-tap), do nothing
+      if (gs.isHorizontalGesture === null) {
+        return;
+      }
+
+      // If it was a vertical gesture, we already released in move handler
+      if (!gs.isHorizontalGesture) return;
+
+      const container = containerRef.current;
+      if (!container) return;
+
+      const containerWidth = container.offsetWidth;
+      const deltaX = gs.currentX - gs.startX;
+      const velocity = gs.velocity;
+
+      // ===========================================
+      // SIMPLE DISMISS/RESTORE DECISION
+      // ===========================================
+      // Swipe left (negative delta or velocity) = close
+      // Swipe right (positive delta or velocity) = open
+
+      let shouldClose = false;
+      let shouldOpen = false;
+
+      // Check for fast swipe OR sufficient distance
+      const fastLeftSwipe = velocity < -VELOCITY_THRESHOLD;
+      const fastRightSwipe = velocity > VELOCITY_THRESHOLD;
+      const leftDistance = deltaX < -DISTANCE_THRESHOLD;
+      const rightDistance = deltaX > DISTANCE_THRESHOLD;
+
+      shouldClose = fastLeftSwipe || leftDistance;
+      shouldOpen = fastRightSwipe || rightDistance;
+
+      // ===========================================
+      // ANIMATE TO FINAL POSITION
+      // ===========================================
+
+      if (shouldClose) {
+        // Animate to closed position with small peek
+        applyTransform(container, -containerWidth + PEEK_WIDTH_VISIBLE, true);
         setSwipedOut(true);
+        setIsHovered(false);
+      } else if (shouldOpen) {
+        // Animate to fully visible
+        applyTransform(container, 0, true);
+        setSwipedOut(false);
+      } else {
+        // Snap back to current state
+        const targetPos = swipedOut ? -containerWidth + PEEK_WIDTH_VISIBLE : 0;
+        applyTransform(container, targetPos, true);
       }
+
+      // Reset gesture state
+      gs.pointerId = null;
+      gs.isHorizontalGesture = null;
+    },
+    [swipedOut, applyTransform],
+  );
+
+  /**
+   * Handle pointer cancel (e.g., system gesture interruption)
+   */
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent) => {
+      const gs = gestureState.current;
+
+      if (e.pointerId !== gs.pointerId) return;
+
+      gs.isDragging = false;
+      gs.pointerId = null;
+      gs.isHorizontalGesture = null;
+
+      // Snap back to current state
+      const container = containerRef.current;
+      if (container) {
+        const containerWidth = container.offsetWidth;
+        const basePos = getBasePosition(swipedOut, containerWidth);
+        applyTransform(container, basePos, true);
+      }
+    },
+    [swipedOut, applyTransform, getBasePosition],
+  );
+
+  // ===========================================
+  // HOVER HANDLERS (Desktop only)
+  // ===========================================
+
+  const handleMouseEnter = useCallback(() => {
+    // Don't change on hover if actively dragging
+    if (gestureState.current.isDragging) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    setIsHovered(true);
+    // Smoothly slide fully open regardless of current state
+    applyTransform(container, 0, true);
+    setSwipedOut(false);
+  }, [applyTransform]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (gestureState.current.isDragging) return;
+    setIsHovered(false);
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Smoothly slide back to closed with peek visible
+    const containerWidth = container.offsetWidth;
+    applyTransform(container, -containerWidth + PEEK_WIDTH_VISIBLE, true);
+    setSwipedOut(true);
+  }, [applyTransform]);
+
+  // ===========================================
+  // INITIAL POSITION SETUP
+  // ===========================================
+
+  useEffect(() => {
+    // Set position after state changes
+    const container = containerRef.current;
+    if (container) {
+      const containerWidth = container.offsetWidth;
+
+      // Simple: visible = 0, hidden = -width + peek
+      const targetPos = swipedOut ? -containerWidth + PEEK_WIDTH_VISIBLE : 0;
+
+      // Only apply animation if not currently dragging
+      const shouldAnimate = !gestureState.current.isDragging;
+      applyTransform(container, targetPos, shouldAnimate);
     }
-    setDragX(0);
-    touchDeltaX.current = 0;
-  }, [swipedOut]);
+  }, [swipedOut, applyTransform]);
+
+  // ===========================================
+  // SWIPE-BACK TAB HANDLERS
+  // ===========================================
+
+  const handleTabPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      // Delegate to main handler but we need to calculate delta relative to main container position
+      handlePointerDown(e);
+    },
+    [handlePointerDown],
+  );
+
+  const handleTabPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      handlePointerMove(e);
+    },
+    [handlePointerMove],
+  );
+
+  const handleTabPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      handlePointerUp(e);
+    },
+    [handlePointerUp],
+  );
 
   useEffect(() => {
     if (user?.emailAddresses?.[0]?.emailAddress) {
@@ -139,34 +502,32 @@ const DemoAccountToast = () => {
       {/* Swipe-back tab visible when toast is swiped out (mobile) */}
       {swipedOut && (
         <div
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 sm:hidden"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          ref={tabRef}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 sm:hidden touch-none select-none cursor-grab active:cursor-grabbing"
+          onPointerDown={handleTabPointerDown}
+          onPointerMove={handleTabPointerMove}
+          onPointerUp={handleTabPointerUp}
+          onPointerCancel={handlePointerCancel}
         >
-          <div className="bg-amber-900/80 backdrop-blur-sm rounded-r-lg px-1.5 py-6 border-r border-t border-b border-amber-700/40">
-            <ChevronRight size={14} className="text-amber-400" />
+          <div className="bg-amber-900/80 backdrop-blur-sm rounded-r-lg px-2 py-6 border-r border-t border-b border-amber-700/40">
+            <ChevronRight size={16} className="text-amber-400" />
           </div>
         </div>
       )}
 
       <div
         ref={containerRef}
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out touch-pan-y"
+        className="fixed left-0 top-1/2 z-50 touch-none select-none"
         style={{
-          transform: `translateY(-50%) translateX(${
-            swipedOut
-              ? `calc(-100% + ${dragX}px)`
-              : isHovered
-                ? "0"
-                : `calc(-100% + 8px + ${dragX}px)`
-          })`,
+          transform: `translateY(-50%)`,
+          willChange: "transform",
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         <div className="bg-gradient-to-r from-amber-950/90 to-amber-900/90 dark:from-amber-900/95 dark:to-amber-950/95 backdrop-blur-xl border border-amber-700/40 dark:border-amber-600/40 rounded-r-2xl shadow-lg overflow-hidden">
           {/* Peek indicator */}
