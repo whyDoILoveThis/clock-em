@@ -170,11 +170,11 @@ const TimecardComponent = ({
 
           {/* Badges */}
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20 tabular-nums">
               <DollarSign size={11} />
               {totalPay.toFixed(2)}
             </span>
-            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 ring-1 ring-indigo-400/20">
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 ring-1 ring-indigo-400/20 tabular-nums">
               <Timer size={11} />
               {parseFloat(totalHours.toFixed(2))}h
             </span>

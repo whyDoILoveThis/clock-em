@@ -1,5 +1,5 @@
 import { Company } from "@/types/types.type";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MdInfoOutline } from "react-icons/md";
 import Timecards from "./Timecards";
 import axios from "axios";
@@ -26,6 +26,71 @@ const MyEmployees = ({ company, ownerId }: Props) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [clockIn, setClockIn] = useState<string>("");
   const [clockOut, setClockOut] = useState<string>("");
+
+  // Track clock-in status for each employee
+  const [employeeClockInStatuses, setEmployeeClockInStatuses] = useState<
+    Record<string, { clockedIn: boolean; onBreak: boolean }>
+  >({});
+
+  // Fetch clock-in status for all employees
+  useEffect(() => {
+    const fetchClockInStatuses = async () => {
+      if (!company.employees || company.employees.length === 0) return;
+
+      try {
+        const statuses: Record<
+          string,
+          { clockedIn: boolean; onBreak: boolean }
+        > = {};
+
+        for (const employee of company.employees) {
+          const response = await axios.get("/api/timecards", {
+            headers: {
+              userId: employee.userId,
+              companyId: company._id,
+            },
+          });
+
+          if (response.status === 200 && response.data.timecards) {
+            const timecards = response.data.timecards;
+            // Find the most recent timecard that has today's date
+            const today = DateTime.now().setZone("America/Chicago").toISODate();
+
+            let clockedIn = false;
+            let onBreak = false;
+
+            for (const timecard of timecards) {
+              const todayDay = timecard.days?.find((day: any) => {
+                const dayDate =
+                  typeof day.date === "string"
+                    ? day.date.split("T")[0]
+                    : DateTime.fromJSDate(new Date(day.date))
+                        .toUTC()
+                        .toISODate();
+                return dayDate === today;
+              });
+
+              if (todayDay?.clockInStatus === true) {
+                clockedIn = true;
+                onBreak = todayDay.breaks?.some((b: any) => !b.endTime)
+                  ? true
+                  : false;
+                break;
+              }
+            }
+
+            statuses[employee.userId] = { clockedIn, onBreak };
+          }
+        }
+
+        setEmployeeClockInStatuses(statuses);
+      } catch (error) {
+        console.error("Error fetching clock-in statuses:", error);
+      }
+    };
+
+    fetchClockInStatuses();
+  }, [company.employees, company._id]);
 
   const updateHourlyRateAPI = async (employeeId: string) => {
     try {
@@ -160,7 +225,28 @@ const MyEmployees = ({ company, ownerId }: Props) => {
               }}
             >
               <div className="flex items-center justify-between w-full">
-                <p className="text-lg font-medium ">{employee.fullName}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-medium ">{employee.fullName}</p>
+
+                  {/* Clock-in status indicator */}
+                  {employeeClockInStatuses[employee.userId]?.clockedIn && (
+                    <span
+                      className="relative flex h-2 w-2"
+                      title={
+                        employeeClockInStatuses[employee.userId]?.onBreak
+                          ? "On break"
+                          : "Clocked in"
+                      }
+                    >
+                      <span
+                        className={`animate-ping absolute inline-flex h-full w-full rounded-full ${employeeClockInStatuses[employee.userId]?.onBreak ? "bg-amber-400" : "bg-green-400"} opacity-60`}
+                      ></span>
+                      <span
+                        className={`relative inline-flex rounded-full h-2 w-2 ${employeeClockInStatuses[employee.userId]?.onBreak ? "bg-amber-500" : "bg-green-500"}`}
+                      ></span>
+                    </span>
+                  )}
+                </div>
                 {isOpen ? (
                   <button
                     onClick={(e) => {
