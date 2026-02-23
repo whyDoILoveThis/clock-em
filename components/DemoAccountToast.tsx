@@ -544,21 +544,21 @@ const DemoAccountToast = () => {
       {swipedOut && (
         <div
           ref={tabRef}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 sm:hidden touch-none select-none cursor-grab active:cursor-grabbing"
+          className="fixed left-2 top-36 -translate-y-1/2 z-50 sm:hidden touch-none select-none cursor-grab active:cursor-grabbing"
           onPointerDown={handleTabPointerDown}
           onPointerMove={handleTabPointerMove}
           onPointerUp={handleTabPointerUp}
           onPointerCancel={handlePointerCancel}
         >
-          <div className="bg-amber-900/80 backdrop-blur-sm rounded-r-lg px-2 py-6 border-r border-t border-b border-amber-700/40">
-            <ChevronRight size={16} className="text-amber-400" />
+          <div className="bg-amber-900/80 backdrop-blur-sm rounded-r-lg py-6 border-r border-t border-b border-amber-700/40">
+            <ChevronRight size={16} className="text-amber-400 translate-x-1" />
           </div>
         </div>
       )}
 
       <div
         ref={containerRef}
-        className="fixed left-0 top-1/2 z-50 touch-none select-none"
+        className="fixed left-0 top-36 z-50 touch-none select-none"
         style={{
           transform: `translateY(-50%)`,
           willChange: "transform",
