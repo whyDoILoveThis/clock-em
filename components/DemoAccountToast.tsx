@@ -37,6 +37,8 @@ const DemoAccountToast = () => {
   const [demoType, setDemoType] = useState<DemoType | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isSwitching, setIsSwitching] = useState<DemoType | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [userInteracted, setUserInteracted] = useState(false);
 
   // ===========================================
   // GESTURE STATE & REFS
@@ -158,6 +160,8 @@ const DemoAccountToast = () => {
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     // Only handle primary pointer (left mouse button, single touch)
     if (!e.isPrimary) return;
+
+    setUserInteracted(true);
 
     const gs = gestureState.current;
 
@@ -380,6 +384,7 @@ const DemoAccountToast = () => {
     const container = containerRef.current;
     if (!container) return;
 
+    setUserInteracted(true);
     setIsHovered(true);
     // Smoothly slide fully open regardless of current state
     applyTransform(container, 0, true);
@@ -461,6 +466,42 @@ const DemoAccountToast = () => {
     }
   }, [user]);
 
+  // Auto-close countdown timer
+  useEffect(() => {
+    if (!demoType || userInteracted) {
+      setCountdown(null);
+      return;
+    }
+
+    // Open the toast and start the countdown
+    setSwipedOut(false);
+    setCountdown(10);
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 0) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [demoType, userInteracted]);
+
+  // When countdown reaches 0, close the toast
+  useEffect(() => {
+    if (countdown === 0) {
+      const container = containerRef.current;
+      if (container) {
+        const containerWidth = container.offsetWidth;
+        applyTransform(container, -containerWidth + PEEK_WIDTH_VISIBLE, true);
+      }
+      setSwipedOut(true);
+      setCountdown(null);
+    }
+  }, [countdown, applyTransform]);
+
   if (!demoType) return null;
 
   const otherTypes = (Object.keys(DEMO_CREDENTIALS) as DemoType[]).filter(
@@ -533,7 +574,14 @@ const DemoAccountToast = () => {
           {/* Peek indicator */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-400"></div>
 
-          <div className="pl-4 pr-4 py-4 min-w-[280px] flex flex-col gap-3">
+          <div className="pl-4 pr-4 py-4 min-w-[280px] flex flex-col gap-3 relative">
+            {/* Countdown timer */}
+            {countdown !== null && countdown > 0 && (
+              <div className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-amber-400/30 border border-amber-400/50 text-[10px] font-bold text-amber-300">
+                {countdown}
+              </div>
+            )}
+
             {/* Header */}
             <div className="flex items-start gap-2">
               <AlertCircle
